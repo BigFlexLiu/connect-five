@@ -1,0 +1,27 @@
+
+
+Connect five:
+	Game setup:
+		Game board: 2D grid where each grid is a square
+		Game play:
+			At the start of each turn, some number of orbs of random color will be placed on the board
+				The number of orbs generated and the number of colors to choose from is dependent on the amount of points the player has
+			Then the player must move a orb to another place
+				A move is consist of one to three shifts along the x or y axises, each shift must have no orb in its path
+			If five orbs of the same color is placed in the same row or column, then they are removed from the board and points are awarded
+			If the whole board is filled, then the player loses
+			The goal of the player is to get as many points as possible at the end of the game.
+	Pages:
+		Start game screen
+		Game screen
+		Game over screen
+		Options
+			- difficulty
+				- Starting number of colors
+				- Maximum number of colors
+				- Least number of orbs generated in one turn
+				- Most number of orbs generated in one turn 
+			- orb colors
+				Select the colors that orbs can have
+				
+	State management: bloc
