@@ -1,11 +1,11 @@
 import 'dart:math';
 
-import 'package:connect_five/screens/util/circle_painter.dart';
-import 'package:connect_five/screens/util/line_painter.dart';
+import 'package:connect_five/util/circle_painter.dart';
+import 'package:connect_five/util/line_painter.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import 'bloc/game_board_notifier.dart';
+import '../bloc/game_board_notifier.dart';
 
 void main() {
   runApp(MyApp());
@@ -26,8 +26,6 @@ class GameScreen extends StatefulWidget {
 }
 
 class _GameScreenState extends State<GameScreen> {
-  final boardNotifier = GameBoardNotifier();
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -43,8 +41,7 @@ class _GameScreenState extends State<GameScreen> {
           IconButton(
             icon: Icon(Icons.settings),
             onPressed: () {
-              Provider.of<GameBoardNotifier>(context, listen: false)
-                  .generateSpots();
+              Provider.of<GameBoardNotifier>(context, listen: false).newTurn();
               // Handle settings button press
             },
           ),

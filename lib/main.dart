@@ -1,5 +1,6 @@
-import 'package:connect_five/screens/bloc/game_board_notifier.dart';
+import 'package:connect_five/bloc/game_board_notifier.dart';
 import 'package:connect_five/screens/game_screen.dart';
+import 'package:connect_five/screens/home.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -16,7 +17,7 @@ class MyApp extends StatelessWidget {
         theme: ThemeData(
             // Define your theme here.
             ),
-        home: GameScreen(),
+        home: Home(),
       ),
     );
   }

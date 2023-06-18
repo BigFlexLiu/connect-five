@@ -4,14 +4,16 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:tuple/tuple.dart';
 
+typedef Position = Point<int>;
+
 class GameBoardNotifier extends ChangeNotifier {
   int score = 0;
-  Point<int> initialPosition = Point(0, 0);
-  Point<int> terminalPosition = Point(0, 0);
+  Position initialPosition = Point(0, 0);
+  Position terminalPosition = Point(0, 0);
   int width = 10;
   int height = 15;
-  List<Point<int>> movePath = [];
-  final Map<Point<int>, Color> circleSpots = {};
+  List<Position> movePath = [];
+  final Map<Position, Color> circleSpots = {};
   final List<Color> spotColors = [
     Colors.red,
     Colors.green,
@@ -53,7 +55,9 @@ class GameBoardNotifier extends ChangeNotifier {
 
   void endTouch() async {
     print("end touch");
-    if (movePath.isEmpty || _moving) {
+    if (movePath.isEmpty || _moving || movePath.length <= 1) {
+      movePath.clear();
+      notifyListeners();
       return;
     }
     final path = movePath;
@@ -64,8 +68,20 @@ class GameBoardNotifier extends ChangeNotifier {
   }
 
   void newTurn() {
-    score += removeAndScoreSpots(findConnectFive());
+    var scoreIncrease = removeAndScoreSpots(findConnectFive());
+    score += scoreIncrease;
+    if (scoreIncrease > 0) {
+      return;
+    }
     generateSpots();
+    score += removeAndScoreSpots(findConnectFive());
+  }
+
+  // Game flow
+  void reset() {
+    score = 0;
+    circleSpots.clear();
+    notifyListeners();
   }
 
   void generateSpots({int numSpots = 5}) {
@@ -74,23 +90,17 @@ class GameBoardNotifier extends ChangeNotifier {
     // Strategy 1
     // Collect free grids and select them at random
     if (circleSpots.length >= width * height * 0.8) {
-      var emptySpots = [];
-      for (var xi = 0; xi < width; xi++) {
-        for (var yi = 0; yi < height; yi++) {
-          var point = Point(xi, yi);
-          if (!circleSpots.containsKey(point)) {
-            emptySpots.add(point);
-          }
-        }
-      }
+      var emptySpots = getEmptyGrids();
       for (var i = 0; i < numSpots; i++) {
+        if (emptySpots.length == 0) {
+          return;
+        }
         final randInt = rng.nextInt(emptySpots.length);
         var spot = emptySpots[randInt];
-        emptySpots.removeAt(spot);
-        x = spot.x;
-        y = spot.y;
+        emptySpots.removeAt(randInt);
         Color color = spotColors[rng.nextInt(spotColors.length)];
-        circleSpots[Point(x, y)] = color;
+        circleSpots[spot] = color;
+        print(circleSpots[spot]);
       }
       notifyListeners();
       return;
@@ -108,10 +118,23 @@ class GameBoardNotifier extends ChangeNotifier {
     notifyListeners();
   }
 
+  List<Position> getEmptyGrids() {
+    List<Position> emptySpots = [];
+    for (var xi = 0; xi < width; xi++) {
+      for (var yi = 0; yi < height; yi++) {
+        var point = Point(xi, yi);
+        if (!circleSpots.containsKey(point)) {
+          emptySpots.add(point);
+        }
+      }
+    }
+    return emptySpots;
+  }
+
   // Path finding
-  List<Point<int>> generatePath(
-      Point<int> initialPosition, Point<int> terminalPosition) {
-    List<Point<int>> path;
+  List<Position> generatePath(
+      Position initialPosition, Position terminalPosition) {
+    List<Position> path;
 
     // Case 1: Straight line
     if (initialPosition.x == terminalPosition.x ||
@@ -121,8 +144,8 @@ class GameBoardNotifier extends ChangeNotifier {
     }
 
     // Case 2: One turn
-    Point<int> midPoint1 = Point(initialPosition.x, terminalPosition.y);
-    Point<int> midPoint2 = Point(terminalPosition.x, initialPosition.y);
+    Position midPoint1 = Point(initialPosition.x, terminalPosition.y);
+    Position midPoint2 = Point(terminalPosition.x, initialPosition.y);
 
     path = _linePath(initialPosition, midPoint1) +
         _linePath(midPoint1, terminalPosition);
@@ -165,11 +188,11 @@ class GameBoardNotifier extends ChangeNotifier {
     return [];
   }
 
-  List<Point<int>> _tryTwoTurnsPath(int x, int y) {
-    Point<int> midPoint1 = Point(x, initialPosition.y);
-    Point<int> midPoint2 = Point(x, terminalPosition.y);
+  List<Position> _tryTwoTurnsPath(int x, int y) {
+    Position midPoint1 = Point(x, initialPosition.y);
+    Position midPoint2 = Point(x, terminalPosition.y);
 
-    List<Point<int>> path = _linePath(initialPosition, midPoint1) +
+    List<Position> path = _linePath(initialPosition, midPoint1) +
         _linePath(midPoint1, midPoint2) +
         _linePath(midPoint2, terminalPosition);
     if (!_pathIntersectsCircle(path)) return path;
@@ -190,10 +213,10 @@ class GameBoardNotifier extends ChangeNotifier {
     return path.skip(1).any((point) => circleSpots.containsKey(point));
   }
 
-  Future<void> _move(List<Point<int>> path) async {
+  Future<void> _move(List<Position> path) async {
     _moving = true;
-    Point<int> current = path.first;
-    for (Point<int> position in path) {
+    Position current = path.first;
+    for (Position position in path) {
       circleSpots[position] = circleSpots.remove(current)!;
       current = Point(position.x, position.y);
       notifyListeners();
@@ -203,13 +226,13 @@ class GameBoardNotifier extends ChangeNotifier {
   }
 
   // Generates a path from start to end
-  List<Point<int>> _linePath(Point<int> start, Point<int> end) {
+  List<Position> _linePath(Position start, Position end) {
     assert(start.x == end.x || start.y == end.y);
 
-    List<Point<int>> path = [];
-    Point<int> dir = Point(end.x - start.x, end.y - start.y);
-    Point<int> normDir = Point(dir.x.sign, dir.y.sign);
-    Point<int> current = start;
+    List<Position> path = [];
+    Position dir = Point(end.x - start.x, end.y - start.y);
+    Position normDir = Point(dir.x.sign, dir.y.sign);
+    Position current = start;
 
     while (current != end) {
       path.add(current);
@@ -220,24 +243,24 @@ class GameBoardNotifier extends ChangeNotifier {
   }
 
   // Finds all occurrences of five or more in a row or column
-  List<List<Point<int>>> findConnectFive() {
-    List<List<Point<int>>> occurrences = [];
+  List<List<Position>> findConnectFive() {
+    List<List<Position>> occurrences = [];
 
     // Checks if a point on the board is occupied by a spot
-    bool isPointOccupied(Point<int> point) {
+    bool isPointOccupied(Position point) {
       return circleSpots.containsKey(point);
     }
 
     // Checks if the color of the spot at the given point is the same as the color of the last spot in the segment
-    bool isSameColorAsLastSpot(Point<int> point, List<Point<int>> segment) {
+    bool isSameColorAsLastSpot(Position point, List<Position> segment) {
       return segment.isEmpty || circleSpots[point] == circleSpots[segment.last];
     }
 
     // Check rows
     for (int y = 0; y < height; y++) {
-      List<Point<int>> segment = [];
+      List<Position> segment = [];
       for (int x = 0; x < width; x++) {
-        Point<int> point = Point(x, y);
+        Position point = Point(x, y);
         if (isPointOccupied(point) && isSameColorAsLastSpot(point, segment)) {
           segment.add(point);
         } else {
@@ -259,9 +282,9 @@ class GameBoardNotifier extends ChangeNotifier {
 
     // Check columns
     for (int x = 0; x < width; x++) {
-      List<Point<int>> segment = [];
+      List<Position> segment = [];
       for (int y = 0; y < height; y++) {
-        Point<int> point = Point(x, y);
+        Position point = Point(x, y);
         if (isPointOccupied(point) && isSameColorAsLastSpot(point, segment)) {
           segment.add(point);
         } else {
@@ -284,7 +307,7 @@ class GameBoardNotifier extends ChangeNotifier {
     return occurrences;
   }
 
-  int removeAndScoreSpots(List<List<Point<int>>> spotsGroup) {
+  int removeAndScoreSpots(List<List<Position>> spotsGroup) {
     int score = 0;
 
     for (var group in spotsGroup) {
@@ -310,5 +333,9 @@ class GameBoardNotifier extends ChangeNotifier {
 
   Color get selectedSpotColor {
     return circleSpots[initialPosition]!;
+  }
+
+  bool get gameOver {
+    return getEmptyGrids().isEmpty;
   }
 }
