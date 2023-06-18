@@ -2,8 +2,10 @@ import 'dart:io';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:tuple/tuple.dart';
 
 class GameBoardNotifier extends ChangeNotifier {
+  int score = 0;
   Point<int> initialPosition = Point(0, 0);
   Point<int> terminalPosition = Point(0, 0);
   int width = 10;
@@ -49,15 +51,21 @@ class GameBoardNotifier extends ChangeNotifier {
     notifyListeners();
   }
 
-  void endTouch() {
+  void endTouch() async {
     print("end touch");
     if (movePath.isEmpty || _moving) {
       return;
     }
     final path = movePath;
     movePath = [];
+    await _move(path);
+    newTurn();
     notifyListeners();
-    _move(path);
+  }
+
+  void newTurn() {
+    score += removeAndScoreSpots(findConnectFive());
+    generateSpots();
   }
 
   void generateSpots({int numSpots = 5}) {
@@ -182,7 +190,7 @@ class GameBoardNotifier extends ChangeNotifier {
     return path.skip(1).any((point) => circleSpots.containsKey(point));
   }
 
-  void _move(List<Point<int>> path) async {
+  Future<void> _move(List<Point<int>> path) async {
     _moving = true;
     Point<int> current = path.first;
     for (Point<int> position in path) {
@@ -209,6 +217,95 @@ class GameBoardNotifier extends ChangeNotifier {
     }
     path.add(end); // Include the end point
     return path;
+  }
+
+  // Finds all occurrences of five or more in a row or column
+  List<List<Point<int>>> findConnectFive() {
+    List<List<Point<int>>> occurrences = [];
+
+    // Checks if a point on the board is occupied by a spot
+    bool isPointOccupied(Point<int> point) {
+      return circleSpots.containsKey(point);
+    }
+
+    // Checks if the color of the spot at the given point is the same as the color of the last spot in the segment
+    bool isSameColorAsLastSpot(Point<int> point, List<Point<int>> segment) {
+      return segment.isEmpty || circleSpots[point] == circleSpots[segment.last];
+    }
+
+    // Check rows
+    for (int y = 0; y < height; y++) {
+      List<Point<int>> segment = [];
+      for (int x = 0; x < width; x++) {
+        Point<int> point = Point(x, y);
+        if (isPointOccupied(point) && isSameColorAsLastSpot(point, segment)) {
+          segment.add(point);
+        } else {
+          if (segment.length >= 5) {
+            occurrences.add(segment);
+          }
+          segment = [];
+          if (circleSpots.containsKey(point)) {
+            segment.add(point);
+          }
+        }
+      }
+
+      if (segment.length >= 5) {
+        occurrences.add(segment);
+      }
+      segment = [];
+    }
+
+    // Check columns
+    for (int x = 0; x < width; x++) {
+      List<Point<int>> segment = [];
+      for (int y = 0; y < height; y++) {
+        Point<int> point = Point(x, y);
+        if (isPointOccupied(point) && isSameColorAsLastSpot(point, segment)) {
+          segment.add(point);
+        } else {
+          if (segment.length >= 5) {
+            occurrences.add(segment);
+          }
+          segment = [];
+          if (circleSpots.containsKey(point)) {
+            segment.add(point);
+          }
+        }
+      }
+
+      if (segment.length >= 5) {
+        occurrences.add(segment);
+      }
+      segment = [];
+    }
+
+    return occurrences;
+  }
+
+  int removeAndScoreSpots(List<List<Point<int>>> spotsGroup) {
+    int score = 0;
+
+    for (var group in spotsGroup) {
+      int groupLength = group.length;
+      if (groupLength >= 5) {
+        for (var point in group) {
+          circleSpots.remove(point);
+        }
+
+        score += 20; // base score for five elements
+        if (groupLength > 5) {
+          int extraScoreIncrement = 10;
+          for (int i = 6; i <= groupLength; i++) {
+            extraScoreIncrement *= 2;
+          }
+          score += extraScoreIncrement;
+        }
+      }
+    }
+
+    return score;
   }
 
   Color get selectedSpotColor {

@@ -27,7 +27,6 @@ class GameScreen extends StatefulWidget {
 
 class _GameScreenState extends State<GameScreen> {
   final boardNotifier = GameBoardNotifier();
-  int score = 0;
 
   @override
   Widget build(BuildContext context) {
@@ -63,7 +62,8 @@ class _GameScreenState extends State<GameScreen> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: <Widget>[
                   SizedBox(height: viewportConstraints.maxHeight * 0.05),
-                  Text('Score: $score'),
+                  Text(
+                      'Score: ${Provider.of<GameBoardNotifier>(context).score}'),
                   SizedBox(height: viewportConstraints.maxHeight * 0.05),
                   Container(
                       height: viewportConstraints.maxHeight * 0.8,
