@@ -33,6 +33,7 @@ class _GameScreenState extends State<GameScreen> {
         leading: IconButton(
           icon: Icon(Icons.arrow_back),
           onPressed: () {
+            Navigator.pop(context);
             // Handle back button press
           },
         ),
