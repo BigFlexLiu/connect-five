@@ -1,26 +1,30 @@
 import 'dart:math';
 
+import 'package:connect_five/bloc/settings_notifier.dart';
 import 'package:connect_five/util/circle_painter.dart';
-import 'package:connect_five/util/line_painter.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../bloc/game_board_notifier.dart';
 
 void main() {
-  runApp(MyApp());
+  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return const MaterialApp(
       home: GameScreen(),
     );
   }
 }
 
 class GameScreen extends StatefulWidget {
+  const GameScreen({super.key});
+
   @override
   _GameScreenState createState() => _GameScreenState();
 }
@@ -31,18 +35,26 @@ class _GameScreenState extends State<GameScreen> {
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
-          icon: Icon(Icons.arrow_back),
+          icon: const Icon(Icons.arrow_back),
           onPressed: () {
             Navigator.pop(context);
             // Handle back button press
           },
         ),
-        title: Text('Game Mode Name'),
+        title: const Text('Game Mode Name'),
         actions: <Widget>[
           IconButton(
-            icon: Icon(Icons.settings),
+            icon: const Icon(Icons.settings),
             onPressed: () {
               Provider.of<GameBoardNotifier>(context, listen: false).newTurn();
+              // Handle settings button press
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.ac_unit),
+            onPressed: () {
+              Provider.of<GameBoardNotifier>(context, listen: false).newGame(
+                  Provider.of<SettingsNotifier>(context, listen: false));
               // Handle settings button press
             },
           ),
@@ -63,7 +75,7 @@ class _GameScreenState extends State<GameScreen> {
                   Text(
                       'Score: ${Provider.of<GameBoardNotifier>(context).score}'),
                   SizedBox(height: viewportConstraints.maxHeight * 0.05),
-                  Container(
+                  SizedBox(
                       height: viewportConstraints.maxHeight * 0.8,
                       child: LayoutBuilder(
                         builder: (context, constraints) {
@@ -96,10 +108,10 @@ class _GameScreenState extends State<GameScreen> {
                                     listen: false)
                                 .endTouch(),
                             child: GridView.builder(
-                              physics: NeverScrollableScrollPhysics(),
+                              physics: const NeverScrollableScrollPhysics(),
                               itemCount: 150,
                               gridDelegate:
-                                  SliverGridDelegateWithFixedCrossAxisCount(
+                                  const SliverGridDelegateWithFixedCrossAxisCount(
                                 crossAxisCount: 10,
                               ),
                               itemBuilder: (BuildContext context, int index) {

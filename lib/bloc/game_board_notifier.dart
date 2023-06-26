@@ -1,20 +1,19 @@
-import 'dart:io';
+import 'dart:convert';
 import 'dart:math';
 
+import 'package:connect_five/bloc/settings_notifier.dart';
 import 'package:flutter/material.dart';
-import 'package:tuple/tuple.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 typedef Position = Point<int>;
 
+/// This class represents a notifier for the game board in Connect Five.
 class GameBoardNotifier extends ChangeNotifier {
-  int score = 0;
-  Position initialPosition = Point(0, 0);
-  Position terminalPosition = Point(0, 0);
-  int width = 10;
-  int height = 15;
-  List<Position> movePath = [];
-  final Map<Position, Color> circleSpots = {};
-  final List<Color> spotColors = [
+  // Settings
+  int _numColors = 0;
+  int _minSpotsPerTurn = 0;
+  int _maxSpotsPerTurn = 0;
+  List<Color> _spotColors = [
     Colors.red,
     Colors.green,
     Colors.blue,
@@ -22,25 +21,45 @@ class GameBoardNotifier extends ChangeNotifier {
     Colors.purple,
     Colors.orange,
   ];
+
+  // Game states
+  int width = 10;
+  int height = 15;
+  int score = 0;
+  Map<Position, Color> circleSpots = {};
+
+  // UI states
+  Position initialPosition = const Point(0, 0);
+  Position terminalPosition = const Point(0, 0);
+  List<Position> movePath = [];
   bool _moving = false;
+
+  GameBoardNotifier() {
+    loadData();
+    loadGameSettings().then((value) {
+      if (_numColors == 0) {
+        // There was no saved game
+        print('newm');
+        newGame(SettingsNotifier());
+      }
+    });
+  }
 
   // User interaction
   void startTouch(int x, int y) {
-    print("start touch");
     if (_moving) {
       return;
     }
+    print(_minSpotsPerTurn);
     initialPosition = Point(x, y);
     terminalPosition = Point(x, y);
     notifyListeners();
   }
 
   void updateTouch(int x, int y) {
-    print("update touch");
     if (_moving) {
       return;
     }
-    print((x, y));
     terminalPosition = Point(x, y);
     if (!circleSpots.containsKey(initialPosition)) {
       return;
@@ -67,40 +86,59 @@ class GameBoardNotifier extends ChangeNotifier {
     notifyListeners();
   }
 
+  // Game flow
+  void newGame(SettingsNotifier settingsNotifier) {
+    // Save the settings at the start of the game
+    _numColors = settingsNotifier.numColors;
+    _minSpotsPerTurn = settingsNotifier.minSpotsPerTurn;
+    _maxSpotsPerTurn = settingsNotifier.maxSpotsPerTurn;
+    _spotColors = List<Color>.from(settingsNotifier.spotColors);
+
+    circleSpots.clear();
+
+    saveGameSettings();
+    saveData();
+    notifyListeners();
+  }
+
   void newTurn() {
-    var scoreIncrease = removeAndScoreSpots(findConnectFive());
+    var scoreIncrease = _removeAndScoreSpots(findConnectFive());
     score += scoreIncrease;
     if (scoreIncrease > 0) {
       return;
     }
     generateSpots();
-    score += removeAndScoreSpots(findConnectFive());
+    score += _removeAndScoreSpots(findConnectFive());
+    saveData();
   }
 
-  // Game flow
   void reset() {
     score = 0;
     circleSpots.clear();
+    saveData();
     notifyListeners();
   }
 
-  void generateSpots({int numSpots = 5}) {
+  // Game logic
+  void generateSpots() {
+    int numSpots =
+        _determineNumSpots(_minSpotsPerTurn, _maxSpotsPerTurn, score);
+
     var rng = Random();
     int x, y;
     // Strategy 1
     // Collect free grids and select them at random
     if (circleSpots.length >= width * height * 0.8) {
-      var emptySpots = getEmptyGrids();
+      var emptySpots = _getEmptyGrids();
       for (var i = 0; i < numSpots; i++) {
-        if (emptySpots.length == 0) {
+        if (emptySpots.isEmpty) {
           return;
         }
         final randInt = rng.nextInt(emptySpots.length);
         var spot = emptySpots[randInt];
         emptySpots.removeAt(randInt);
-        Color color = spotColors[rng.nextInt(spotColors.length)];
+        Color color = _spotColors[rng.nextInt(_numColors)];
         circleSpots[spot] = color;
-        print(circleSpots[spot]);
       }
       notifyListeners();
       return;
@@ -112,13 +150,24 @@ class GameBoardNotifier extends ChangeNotifier {
         x = rng.nextInt(width);
         y = rng.nextInt(height);
       } while (circleSpots.containsKey(Point(x, y)));
-      Color color = spotColors[rng.nextInt(spotColors.length)];
+      Color color = _spotColors[rng.nextInt(_numColors)];
       circleSpots[Point(x, y)] = color;
     }
     notifyListeners();
   }
 
-  List<Position> getEmptyGrids() {
+  int _determineNumSpots(int base, int max, int score) {
+    if (score >= 1000 && base + 3 <= max) {
+      return base + 3;
+    } else if (score >= 500 && base + 2 <= max) {
+      return base + 2;
+    } else if (score >= 100 && base + 1 <= max) {
+      return base + 1;
+    }
+    return base;
+  }
+
+  List<Position> _getEmptyGrids() {
     List<Position> emptySpots = [];
     for (var xi = 0; xi < width; xi++) {
       for (var yi = 0; yi < height; yi++) {
@@ -131,7 +180,6 @@ class GameBoardNotifier extends ChangeNotifier {
     return emptySpots;
   }
 
-  // Path finding
   List<Position> generatePath(
       Position initialPosition, Position terminalPosition) {
     List<Position> path;
@@ -220,7 +268,7 @@ class GameBoardNotifier extends ChangeNotifier {
       circleSpots[position] = circleSpots.remove(current)!;
       current = Point(position.x, position.y);
       notifyListeners();
-      await Future.delayed(Duration(milliseconds: 50));
+      await Future.delayed(const Duration(milliseconds: 50));
     }
     _moving = false;
   }
@@ -307,12 +355,14 @@ class GameBoardNotifier extends ChangeNotifier {
     return occurrences;
   }
 
-  int removeAndScoreSpots(List<List<Position>> spotsGroup) {
+  int _removeAndScoreSpots(List<List<Position>> spotsGroup) {
     int score = 0;
+    print(spotsGroup);
 
     for (var group in spotsGroup) {
       int groupLength = group.length;
       if (groupLength >= 5) {
+        print(groupLength);
         for (var point in group) {
           circleSpots.remove(point);
         }
@@ -331,11 +381,68 @@ class GameBoardNotifier extends ChangeNotifier {
     return score;
   }
 
+  // Save and load data
+  void saveGameSettings() async {
+    final prefs = await SharedPreferences.getInstance();
+    prefs.setInt('game_numColors', _numColors);
+    prefs.setInt('game_minSpotsPerTurn', _minSpotsPerTurn);
+    prefs.setInt('game_maxSpotsPerTurn', _maxSpotsPerTurn);
+    for (int i = 0; i < _spotColors.length; i++) {
+      prefs.setInt('game_spotColor$i', _spotColors[i].value);
+    }
+  }
+
+  Future<void> loadGameSettings() async {
+    final prefs = await SharedPreferences.getInstance();
+    _numColors = prefs.getInt('game_numColors') ?? _numColors;
+    _minSpotsPerTurn = prefs.getInt('game_minSpotsPerTurn') ?? _minSpotsPerTurn;
+    _maxSpotsPerTurn = prefs.getInt('game_maxSpotsPerTurn') ?? _maxSpotsPerTurn;
+    for (int i = 0; i < _spotColors.length; i++) {
+      int? colorValue = prefs.getInt('game_spotColor$i');
+      if (colorValue != null) {
+        _spotColors[i] = Color(colorValue);
+      }
+    }
+  }
+
+  Future<void> saveData() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String jsonString = jsonEncode(toJson());
+    prefs.setString('gameData', jsonString);
+  }
+
+  Future<void> loadData() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? jsonString = prefs.getString('gameData');
+    if (jsonString != null) {
+      Map<String, dynamic> jsonData = jsonDecode(jsonString);
+      fromJson(jsonData);
+      notifyListeners();
+    }
+  }
+
+  Map<String, dynamic> toJson() => {
+        'score': score,
+        'width': width,
+        'height': height,
+        'circleSpots': circleSpots
+            .map((k, v) => MapEntry('{"x":${k.x},"y":${k.y}}', v.value)),
+      };
+
+  void fromJson(Map<String, dynamic> json) {
+    score = json['score'];
+    width = json['width'];
+    height = json['height'];
+    circleSpots = (json['circleSpots'] as Map).map((k, v) =>
+        MapEntry(Point(jsonDecode(k)['x'], jsonDecode(k)['y']), Color(v)));
+  }
+
+  // Getters
   Color get selectedSpotColor {
     return circleSpots[initialPosition]!;
   }
 
   bool get gameOver {
-    return getEmptyGrids().isEmpty;
+    return _getEmptyGrids().isEmpty;
   }
 }

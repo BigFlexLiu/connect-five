@@ -2,17 +2,18 @@ import 'package:connect_five/bloc/game_board_notifier.dart';
 import 'package:connect_five/bloc/settings_notifier.dart';
 import 'package:connect_five/screens/home.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:provider/provider.dart';
 
 void main() {
-  runApp(MyApp());
+  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
   @override
   Widget build(BuildContext context) {
-    return MultiBlocProvider(
+    return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => GameBoardNotifier()),
         ChangeNotifierProvider(create: (_) => SettingsNotifier()),
@@ -21,7 +22,7 @@ class MyApp extends StatelessWidget {
         theme: ThemeData(
             // Define your theme here.
             ),
-        home: Home(),
+        home: const Home(),
       ),
     );
   }

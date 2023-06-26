@@ -6,7 +6,7 @@ import '../bloc/game_board_notifier.dart';
 class GameOverScreen extends StatelessWidget {
   final int score;
 
-  GameOverScreen({required this.score});
+  const GameOverScreen({super.key, required this.score});
 
   @override
   Widget build(BuildContext context) {
@@ -16,7 +16,7 @@ class GameOverScreen extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
-            Text(
+            const Text(
               'Game Over',
               style: TextStyle(
                 color: Colors.white,
@@ -24,22 +24,22 @@ class GameOverScreen extends StatelessWidget {
                 fontWeight: FontWeight.bold,
               ),
             ),
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
             Text(
               'Score: $score',
-              style: TextStyle(
+              style: const TextStyle(
                 color: Colors.white,
                 fontSize: 30,
               ),
             ),
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
             ElevatedButton(
               onPressed: () {
                 Provider.of<GameBoardNotifier>(context, listen: false).reset();
                 // Code to restart the game
                 // This could involve routing to the initial screen or resetting the game state
               },
-              child: Text('Play Again'),
+              child: const Text('Play Again'),
             ),
           ],
         ),

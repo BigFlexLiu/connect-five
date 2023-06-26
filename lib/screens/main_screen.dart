@@ -4,12 +4,14 @@ import 'package:flutter/material.dart';
 import 'game_screen.dart';
 
 class MainScreen extends StatelessWidget {
+  const MainScreen({super.key});
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       home: Scaffold(
         appBar: AppBar(
-          title: Text('Main Screen'),
+          title: const Text('Main Screen'),
         ),
         body: Center(
           child: Column(
@@ -19,36 +21,38 @@ class MainScreen extends StatelessWidget {
                 onPressed: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(
-                        builder: (context) =>
-                            GameScreen()), // replace with your actual game screen widget
+                    MaterialPageRoute(builder: (context) {
+                      return const GameScreen();
+                    }), // replace with your actual game screen widget
                   );
                 },
-                child: Text('Start Game'),
                 style: ElevatedButton.styleFrom(
-                  primary: Colors.green,
-                  padding: EdgeInsets.symmetric(horizontal: 50, vertical: 20),
-                  textStyle:
-                      TextStyle(fontSize: 30, fontWeight: FontWeight.bold),
+                  backgroundColor: Colors.green,
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 50, vertical: 20),
+                  textStyle: const TextStyle(
+                      fontSize: 30, fontWeight: FontWeight.bold),
                 ),
+                child: const Text('Play'),
               ),
-              SizedBox(height: 50),
+              const SizedBox(height: 50),
               ElevatedButton(
                 onPressed: () {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
                         builder: (context) =>
-                            SettingsScreen()), // replace with your actual settings screen widget
+                            const SettingsScreen()), // replace with your actual settings screen widget
                   );
                 },
-                child: Text('Settings'),
                 style: ElevatedButton.styleFrom(
-                  primary: Colors.blue,
-                  padding: EdgeInsets.symmetric(horizontal: 50, vertical: 20),
-                  textStyle:
-                      TextStyle(fontSize: 30, fontWeight: FontWeight.bold),
+                  backgroundColor: Colors.blue,
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 50, vertical: 20),
+                  textStyle: const TextStyle(
+                      fontSize: 30, fontWeight: FontWeight.bold),
                 ),
+                child: const Text('Settings'),
               ),
             ],
           ),

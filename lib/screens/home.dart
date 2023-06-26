@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 
 import '../bloc/game_board_notifier.dart';
 import 'game_over_screen.dart';
-import 'game_screen.dart';
 import 'main_screen.dart';
 
 class Home extends StatefulWidget {
@@ -18,7 +17,7 @@ class _HomeState extends State<Home> {
   Widget build(BuildContext context) {
     return Stack(
       children: <Widget>[
-        MainScreen(),
+        const MainScreen(),
         if (Provider.of<GameBoardNotifier>(context).gameOver)
           GameOverScreen(score: Provider.of<GameBoardNotifier>(context).score),
       ],
