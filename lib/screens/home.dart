@@ -1,9 +1,11 @@
+import 'package:connect_five/screens/game_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../bloc/game_board_notifier.dart';
+import 'end_game_screen.dart';
 import 'game_over_screen.dart';
-import 'main_screen.dart';
+import 'menu.dart';
 
 class Home extends StatefulWidget {
   const Home({super.key});
@@ -17,9 +19,9 @@ class _HomeState extends State<Home> {
   Widget build(BuildContext context) {
     return Stack(
       children: <Widget>[
-        const MainScreen(),
+        const GameScreen(),
         if (Provider.of<GameBoardNotifier>(context).gameOver)
-          GameOverScreen(score: Provider.of<GameBoardNotifier>(context).score),
+          EndGameScreen(score: Provider.of<GameBoardNotifier>(context).score),
       ],
     );
   }

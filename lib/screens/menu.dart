@@ -1,10 +1,12 @@
-import 'package:connect_five/screens/settings_screen.dart';
+import 'package:connect_five/screens/home.dart';
+import 'package:connect_five/screens/new_high_score_screen.dart';
 import 'package:flutter/material.dart';
 
 import 'game_screen.dart';
+import 'leaderboard_screen.dart';
 
-class MainScreen extends StatelessWidget {
-  const MainScreen({super.key});
+class Menu extends StatelessWidget {
+  const Menu({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -22,7 +24,7 @@ class MainScreen extends StatelessWidget {
                   Navigator.push(
                     context,
                     MaterialPageRoute(builder: (context) {
-                      return const GameScreen();
+                      return const Home();
                     }), // replace with your actual game screen widget
                   );
                 },
@@ -42,7 +44,7 @@ class MainScreen extends StatelessWidget {
                     context,
                     MaterialPageRoute(
                         builder: (context) =>
-                            const SettingsScreen()), // replace with your actual settings screen widget
+                            LeaderBoardScreen()), // replace with your actual settings screen widget
                   );
                 },
                 style: ElevatedButton.styleFrom(
@@ -52,7 +54,7 @@ class MainScreen extends StatelessWidget {
                   textStyle: const TextStyle(
                       fontSize: 30, fontWeight: FontWeight.bold),
                 ),
-                child: const Text('Settings'),
+                child: const Text('Leaderboard'),
               ),
             ],
           ),

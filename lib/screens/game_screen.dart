@@ -1,11 +1,10 @@
 import 'dart:math';
 
-import 'package:connect_five/bloc/settings_notifier.dart';
-import 'package:connect_five/util/circle_painter.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../bloc/game_board_notifier.dart';
+import '../constant.dart';
 
 void main() {
   runApp(const MyApp());
@@ -41,20 +40,19 @@ class _GameScreenState extends State<GameScreen> {
             // Handle back button press
           },
         ),
-        title: const Text('Game Mode Name'),
+        title: const Text('Connect Five'),
         actions: <Widget>[
           IconButton(
-            icon: const Icon(Icons.settings),
+            icon: const Icon(Icons.refresh),
             onPressed: () {
-              Provider.of<GameBoardNotifier>(context, listen: false).newTurn();
-              // Handle settings button press
+              Provider.of<GameBoardNotifier>(context, listen: false).newGame();
+              // Handle back button press
             },
           ),
           IconButton(
-            icon: const Icon(Icons.ac_unit),
+            icon: const Icon(Icons.trending_flat),
             onPressed: () {
-              Provider.of<GameBoardNotifier>(context, listen: false).newGame(
-                  Provider.of<SettingsNotifier>(context, listen: false));
+              Provider.of<GameBoardNotifier>(context, listen: false).newTurn();
               // Handle settings button press
             },
           ),
@@ -117,29 +115,49 @@ class _GameScreenState extends State<GameScreen> {
                               itemBuilder: (BuildContext context, int index) {
                                 final int x = index % 10;
                                 final int y = index ~/ 10;
+
+                                final position = Point(x, y);
                                 final isTaken =
                                     Provider.of<GameBoardNotifier>(context)
                                         .movePath
-                                        .contains(Point(x, y));
-                                final spotColor =
+                                        .contains(position);
+                                final isInConnectFive =
                                     Provider.of<GameBoardNotifier>(context)
-                                        .circleSpots[Point(x, y)];
+                                        .positionsToAnimate
+                                        .containsKey(position);
+                                final image = isInConnectFive
+                                    ? Provider.of<GameBoardNotifier>(context)
+                                        .positionsToAnimate[position]
+                                    : Provider.of<GameBoardNotifier>(context)
+                                        .selectedSpotImage(position);
 
-                                return CustomPaint(
-                                  painter: spotColor != null
-                                      ? CirclePainter(color: spotColor)
-                                      : null,
-                                  child: Container(
-                                    decoration: BoxDecoration(
-                                      border: Border.all(),
-                                      color: isTaken
-                                          ? Provider.of<GameBoardNotifier>(
-                                                  context)
-                                              .selectedSpotColor
-                                          : null,
-                                    ),
+                                final grid = Container(
+                                  decoration: BoxDecoration(
+                                    border: Border.all(),
+                                    color: isTaken
+                                        ? Provider.of<GameBoardNotifier>(
+                                                context)
+                                            .selectedSpotColor
+                                        : null,
                                   ),
+                                  child: image != null
+                                      ? Image(
+                                          image: AssetImage(image),
+                                          fit: BoxFit.contain,
+                                        )
+                                      : null,
                                 );
+
+                                if (isInConnectFive) {
+                                  return AnimatedOpacity(
+                                      opacity: Provider.of<GameBoardNotifier>(
+                                              context)
+                                          .opacityAt(Point(x, y)),
+                                      duration:
+                                          const Duration(milliseconds: 500),
+                                      child: grid);
+                                }
+                                return grid;
                               },
                             ),
                           );
