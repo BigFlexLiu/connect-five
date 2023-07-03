@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../constant.dart';
+import 'animated_state.dart';
 
 typedef Position = Point<int>;
 
@@ -192,15 +193,6 @@ class GameLogic {
   bool _pathIntersectsCircle(List<Point> path) {
     // Exclude the initial position by skipping the first item in path
     return path.skip(1).any((point) => gameData.circleSpots.containsKey(point));
-  }
-
-  Future<void> _move(List<Position> path) async {
-    Position current = path.first;
-    for (Position position in path) {
-      gameData.circleSpots[position] = gameData.circleSpots.remove(current)!;
-      current = Point(position.x, position.y);
-      await Future.delayed(const Duration(milliseconds: 50));
-    }
   }
 
   // Generates a path from start to end
@@ -414,15 +406,10 @@ class GameBoardNotifier extends ChangeNotifier {
     movePath = [];
 
     _moving = true;
-    await gameLogic._move(path);
+    await _move(path);
     _moving = false;
 
     final connectFives = gameLogic.findConnectFive();
-    for (final connectFive in connectFives) {
-      for (final spot in connectFive) {
-        positionsToAnimate[spot] = selectedSpotImage(spot)!;
-      }
-    }
 
     gameLogic.newTurn();
     notifyListeners();
@@ -431,6 +418,16 @@ class GameBoardNotifier extends ChangeNotifier {
   void newGame() {
     gameLogic.newGame();
     notifyListeners();
+  }
+
+  Future<void> _move(List<Position> path) async {
+    Position current = path.first;
+    for (Position position in path) {
+      gameData.circleSpots[position] = gameData.circleSpots.remove(current)!;
+      current = Point(position.x, position.y);
+      notifyListeners();
+      await Future.delayed(const Duration(milliseconds: 50));
+    }
   }
 
   // Getters

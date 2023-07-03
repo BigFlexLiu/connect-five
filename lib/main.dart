@@ -1,8 +1,11 @@
 import 'package:connect_five/bloc/game_board_notifier.dart';
-import 'package:connect_five/bloc/settings_notifier.dart';
+import 'package:connect_five/screens/game_screen.dart';
 import 'package:connect_five/screens/home.dart';
+import 'package:connect_five/screens/menu.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
+import 'bloc/leaderboard.dart';
 
 void main() {
   runApp(const MyApp());
@@ -16,13 +19,15 @@ class MyApp extends StatelessWidget {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => GameBoardNotifier()),
-        ChangeNotifierProvider(create: (_) => SettingsNotifier()),
+        ChangeNotifierProvider(
+          create: (context) => LeaderBoardProvider(),
+        ),
       ],
       child: MaterialApp(
         theme: ThemeData(
             // Define your theme here.
             ),
-        home: const Home(),
+        home: const Menu(),
       ),
     );
   }

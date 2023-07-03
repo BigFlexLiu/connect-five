@@ -131,7 +131,7 @@ class _GameScreenState extends State<GameScreen> {
                                     : Provider.of<GameBoardNotifier>(context)
                                         .selectedSpotImage(position);
 
-                                final grid = Container(
+                                return Container(
                                   decoration: BoxDecoration(
                                     border: Border.all(),
                                     color: isTaken
@@ -147,17 +147,6 @@ class _GameScreenState extends State<GameScreen> {
                                         )
                                       : null,
                                 );
-
-                                if (isInConnectFive) {
-                                  return AnimatedOpacity(
-                                      opacity: Provider.of<GameBoardNotifier>(
-                                              context)
-                                          .opacityAt(Point(x, y)),
-                                      duration:
-                                          const Duration(milliseconds: 500),
-                                      child: grid);
-                                }
-                                return grid;
                               },
                             ),
                           );
