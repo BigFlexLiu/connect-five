@@ -47,8 +47,9 @@ class GameData {
 
 class GameLogic {
   GameData gameData;
+  Function(List<Position> connectFives) onConnectFiveFound;
 
-  GameLogic(this.gameData);
+  GameLogic(this.gameData, this.onConnectFiveFound);
 
   // Game flow
   void newGame() {
@@ -59,13 +60,20 @@ class GameLogic {
     gameData.saveData();
   }
 
-  void newTurn() {
+  void newTurn() async {
+    List<List<Position>> connectFives = findConnectFive();
+    await onConnectFiveFound(connectFives.expand((i) => i).toList());
     var scoreIncrease = _removeAndScoreSpots(findConnectFive());
     gameData.score += scoreIncrease;
+    // Skip spot generation if there is a connectFive
     if (scoreIncrease > 0) {
       return;
     }
+
+    // spot generation
     generateSpots();
+    connectFives = findConnectFive();
+    await onConnectFiveFound(connectFives.expand((i) => i).toList());
     gameData.score += _removeAndScoreSpots(findConnectFive());
     gameData.saveData();
   }
@@ -355,13 +363,27 @@ class GameBoardNotifier extends ChangeNotifier {
   Position initialPosition = const Point(0, 0);
   Position terminalPosition = const Point(0, 0);
   List<Position> movePath = [];
-  bool _moving = false;
-  Map<Position, String> positionsToAnimate = {};
+  int pause = 0; // semaphore, 0 is false, 1+ is true
+  List<Position> connectiveFivePos = [];
 
   GameBoardNotifier() {
     gameData = GameData();
-    gameLogic = GameLogic(gameData);
+    gameLogic = GameLogic(gameData, onConnectFive);
     _loadData();
+  }
+
+  void onConnectFive(List<Position> connectFives) async {
+    if (connectFives.isEmpty) {
+      return;
+    }
+    connectiveFivePos = connectFives;
+    notifyListeners();
+
+    pause += 1;
+    await Future.delayed(Duration(milliseconds: 500));
+    connectiveFivePos.clear();
+    pause -= 1;
+    notifyListeners();
   }
 
   Future<void> _loadData() async {
@@ -369,10 +391,9 @@ class GameBoardNotifier extends ChangeNotifier {
     notifyListeners();
   }
 
-  // ...rest of the User Interaction methods go here...
   // User interaction
   void startTouch(int x, int y) {
-    if (_moving) {
+    if (pause != 0) {
       return;
     }
     initialPosition = Point(x, y);
@@ -381,7 +402,7 @@ class GameBoardNotifier extends ChangeNotifier {
   }
 
   void updateTouch(int x, int y) {
-    if (_moving) {
+    if (pause != 0) {
       return;
     }
     terminalPosition = Point(x, y);
@@ -397,7 +418,7 @@ class GameBoardNotifier extends ChangeNotifier {
   }
 
   void endTouch() async {
-    if (movePath.isEmpty || _moving || movePath.length <= 1) {
+    if (movePath.isEmpty || pause != 0 || movePath.length <= 1) {
       movePath.clear();
       notifyListeners();
       return;
@@ -405,13 +426,11 @@ class GameBoardNotifier extends ChangeNotifier {
     final path = movePath;
     movePath = [];
 
-    _moving = true;
+    pause += 1;
     await _move(path);
-    _moving = false;
+    pause -= 1;
 
-    final connectFives = gameLogic.findConnectFive();
-
-    gameLogic.newTurn();
+    newTurn();
     notifyListeners();
   }
 
@@ -420,19 +439,28 @@ class GameBoardNotifier extends ChangeNotifier {
     notifyListeners();
   }
 
+  void newTurn() async {
+    gameLogic.newTurn();
+    notifyListeners();
+  }
+
   Future<void> _move(List<Position> path) async {
     Position current = path.first;
     for (Position position in path) {
       gameData.circleSpots[position] = gameData.circleSpots.remove(current)!;
       current = Point(position.x, position.y);
-      notifyListeners();
       await Future.delayed(const Duration(milliseconds: 50));
+      notifyListeners();
     }
   }
 
-  // Getters
-  Color get selectedSpotColor {
-    return pathColors[gameData.circleSpots[initialPosition]!];
+  Color? getPositionColor(Position pos) {
+    if (gameData.circleSpots.containsKey(pos)) {
+      return pathColors[gameData.circleSpots[pos]!];
+    } else if (movePath.contains(pos)) {
+      return pathColors[gameData.circleSpots[initialPosition]!];
+    }
+    return null;
   }
 
   String? selectedSpotImage(Position pos) {
@@ -444,10 +472,4 @@ class GameBoardNotifier extends ChangeNotifier {
 
   int get score => gameData.score;
   bool get gameOver => gameLogic.gameOver;
-
-  // Experimental
-  void newTurn() {
-    gameLogic.newTurn();
-    notifyListeners();
-  }
 }

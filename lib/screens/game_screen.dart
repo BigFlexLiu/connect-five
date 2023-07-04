@@ -123,21 +123,20 @@ class _GameScreenState extends State<GameScreen> {
                                         .contains(position);
                                 final isInConnectFive =
                                     Provider.of<GameBoardNotifier>(context)
-                                        .positionsToAnimate
-                                        .containsKey(position);
-                                final image = isInConnectFive
-                                    ? Provider.of<GameBoardNotifier>(context)
-                                        .positionsToAnimate[position]
-                                    : Provider.of<GameBoardNotifier>(context)
+                                        .connectiveFivePos
+                                        .contains(position);
+                                final color =
+                                    Provider.of<GameBoardNotifier>(context)
+                                        .getPositionColor(position);
+                                final image =
+                                    Provider.of<GameBoardNotifier>(context)
                                         .selectedSpotImage(position);
 
                                 return Container(
                                   decoration: BoxDecoration(
                                     border: Border.all(),
-                                    color: isTaken
-                                        ? Provider.of<GameBoardNotifier>(
-                                                context)
-                                            .selectedSpotColor
+                                    color: isTaken || isInConnectFive
+                                        ? color
                                         : null,
                                   ),
                                   child: image != null
