@@ -33,12 +33,18 @@ class GameData {
         'score': score,
         'circleSpots':
             circleSpots.map((k, v) => MapEntry('{"x":${k.x},"y":${k.y}}', v)),
+        'nextBatchPreview': nextBatchPreview
+            .map((k, v) => MapEntry('{"x":${k.x},"y":${k.y}}', v)),
       };
 
   void fromJson(Map<String, dynamic> json) {
     score = json['score'];
     circleSpots = json.containsKey('circleSpots')
         ? (json['circleSpots'] as Map).map((k, v) =>
+            MapEntry(Point(jsonDecode(k)['x'], jsonDecode(k)['y']), v))
+        : {};
+    nextBatchPreview = json.containsKey('nextBatchPreview')
+        ? (json['nextBatchPreview'] as Map).map((k, v) =>
             MapEntry(Point(jsonDecode(k)['x'], jsonDecode(k)['y']), v))
         : {};
   }

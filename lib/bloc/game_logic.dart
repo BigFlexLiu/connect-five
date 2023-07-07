@@ -14,6 +14,7 @@ class GameLogic {
   void newGame() {
     gameData.score = 0;
     gameData.circleSpots.clear();
+    gameData.nextBatchPreview.clear();
     generatePreview();
     newTurn();
 
@@ -27,6 +28,7 @@ class GameLogic {
     gameData.score += scoreIncrease;
     // Skip spot generation if there is a connectFive
     if (scoreIncrease > 0) {
+      gameData.saveData();
       return;
     }
 
