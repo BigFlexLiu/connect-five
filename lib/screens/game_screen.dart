@@ -135,24 +135,29 @@ class _GameScreenState extends State<GameScreen> {
                                     Provider.of<GameBoardNotifier>(context)
                                         .selectedSpotImage(position);
 
+                                // Define the color for the Container decoration based on certain conditions
+                                final boxColor =
+                                    (isTaken || isInConnectFive) ? color : null;
+                                // Define the image for the Container child based on certain conditions
+                                final containerImage = (image != null)
+                                    ? AssetImage(image)
+                                    : (previewImage != null)
+                                        ? AssetImage(previewImage)
+                                        : null;
+                                // Define the child for the Container based on whether there's an image or not
+                                final containerChild = (containerImage != null)
+                                    ? Image(
+                                        image: containerImage,
+                                        fit: BoxFit.contain)
+                                    : null;
+                                // Return the Container
                                 return Container(
-                                    decoration: BoxDecoration(
-                                      border: Border.all(),
-                                      color: isTaken || isInConnectFive
-                                          ? color
-                                          : null,
-                                    ),
-                                    child: image != null
-                                        ? Image(
-                                            image: AssetImage(image),
-                                            fit: BoxFit.contain,
-                                          )
-                                        : previewImage != null
-                                            ? Image(
-                                                image: AssetImage(previewImage),
-                                                fit: BoxFit.contain,
-                                              )
-                                            : null);
+                                  decoration: BoxDecoration(
+                                    border: Border.all(),
+                                    color: boxColor,
+                                  ),
+                                  child: containerChild,
+                                );
                               },
                             ),
                           );
