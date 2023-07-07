@@ -128,24 +128,31 @@ class _GameScreenState extends State<GameScreen> {
                                 final color =
                                     Provider.of<GameBoardNotifier>(context)
                                         .getPositionColor(position);
+                                final previewImage =
+                                    Provider.of<GameBoardNotifier>(context)
+                                        .previewImage(position);
                                 final image =
                                     Provider.of<GameBoardNotifier>(context)
                                         .selectedSpotImage(position);
 
                                 return Container(
-                                  decoration: BoxDecoration(
-                                    border: Border.all(),
-                                    color: isTaken || isInConnectFive
-                                        ? color
-                                        : null,
-                                  ),
-                                  child: image != null
-                                      ? Image(
-                                          image: AssetImage(image),
-                                          fit: BoxFit.contain,
-                                        )
-                                      : null,
-                                );
+                                    decoration: BoxDecoration(
+                                      border: Border.all(),
+                                      color: isTaken || isInConnectFive
+                                          ? color
+                                          : null,
+                                    ),
+                                    child: image != null
+                                        ? Image(
+                                            image: AssetImage(image),
+                                            fit: BoxFit.contain,
+                                          )
+                                        : previewImage != null
+                                            ? Image(
+                                                image: AssetImage(previewImage),
+                                                fit: BoxFit.contain,
+                                              )
+                                            : null);
                               },
                             ),
                           );

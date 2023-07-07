@@ -17,6 +17,16 @@ const images = [
   'assets/yellow.png',
 ];
 
+const previewImages = [
+  'assets/red_preview.png',
+  'assets/green_preview.png',
+  'assets/blue_preview.png',
+  'assets/orange_preview.png',
+  'assets/purple_preview.png',
+  'assets/pink_preview.png',
+  'assets/yellow_preview.png',
+];
+
 const pathColors = [
   Colors.red,
   Colors.green,
