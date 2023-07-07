@@ -26,8 +26,10 @@ class GameLogic {
     await onConnectFiveFound(connectFives.expand((i) => i).toList());
     var scoreIncrease = _removeAndScoreSpots(findConnectFive());
     gameData.score += scoreIncrease;
+    gameData.turnsSkipped += connectFives.length;
     // Skip spot generation if there is a connectFive
-    if (scoreIncrease > 0) {
+    if (gameData.turnsSkipped > 0) {
+      gameData.turnsSkipped -= 1;
       gameData.saveData();
       return;
     }

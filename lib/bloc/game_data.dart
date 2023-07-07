@@ -11,6 +11,7 @@ class GameData {
   int height = 15;
   Map<Position, int> circleSpots = {};
   Map<Position, int> nextBatchPreview = {};
+  int turnsSkipped = 0;
 
   GameData();
 
@@ -35,6 +36,7 @@ class GameData {
             circleSpots.map((k, v) => MapEntry('{"x":${k.x},"y":${k.y}}', v)),
         'nextBatchPreview': nextBatchPreview
             .map((k, v) => MapEntry('{"x":${k.x},"y":${k.y}}', v)),
+        'turnsSkipped': turnsSkipped,
       };
 
   void fromJson(Map<String, dynamic> json) {
@@ -47,5 +49,6 @@ class GameData {
         ? (json['nextBatchPreview'] as Map).map((k, v) =>
             MapEntry(Point(jsonDecode(k)['x'], jsonDecode(k)['y']), v))
         : {};
+    turnsSkipped = json['turnsSkipped'];
   }
 }
