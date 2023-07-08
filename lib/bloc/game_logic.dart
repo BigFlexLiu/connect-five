@@ -135,14 +135,16 @@ class GameLogic {
       }
     }
 
+    print(maxX);
+
     List xValues = [
       Iterable.generate(minX).toList().reversed,
-      List.generate(WIDTH - maxX, (i) => i + maxX + 1)
+      List.generate(WIDTH - maxX, (i) => i + maxX)
     ].expand((x) => x).toList();
 
     List yValues = [
       Iterable.generate(minY).toList().reversed,
-      List.generate(HEIGHT - maxY, (i) => i + maxY + 1)
+      List.generate(HEIGHT - maxY, (i) => i + maxY)
     ].expand((x) => x).toList();
 
     for (int x in xValues) {
