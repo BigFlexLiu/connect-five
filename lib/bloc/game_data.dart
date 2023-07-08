@@ -12,8 +12,17 @@ class GameData {
   Map<Position, int> circleSpots = {};
   Map<Position, int> nextBatchPreview = {};
   int turnsSkipped = 0;
+  int generationNerf = 0;
 
   GameData();
+
+  void clear() {
+    score = 0;
+    circleSpots.clear();
+    nextBatchPreview.clear();
+    turnsSkipped = 0;
+    generationNerf = 0;
+  }
 
   Future<void> saveData() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -37,6 +46,7 @@ class GameData {
         'nextBatchPreview': nextBatchPreview
             .map((k, v) => MapEntry('{"x":${k.x},"y":${k.y}}', v)),
         'turnsSkipped': turnsSkipped,
+        'generationNerf': generationNerf,
       };
 
   void fromJson(Map<String, dynamic> json) {
@@ -50,5 +60,6 @@ class GameData {
             MapEntry(Point(jsonDecode(k)['x'], jsonDecode(k)['y']), v))
         : {};
     turnsSkipped = json['turnsSkipped'];
+    generationNerf = json['generationNerf'];
   }
 }

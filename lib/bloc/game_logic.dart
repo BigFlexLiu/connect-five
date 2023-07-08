@@ -12,9 +12,7 @@ class GameLogic {
 
   // Game flow
   void newGame() {
-    gameData.score = 0;
-    gameData.circleSpots.clear();
-    gameData.nextBatchPreview.clear();
+    gameData.clear();
     generatePreview();
     newTurn();
 
@@ -24,9 +22,7 @@ class GameLogic {
   void newTurn() async {
     List<List<Position>> connectFives = findConnectFive();
     await onConnectFiveFound(connectFives.expand((i) => i).toList());
-    var scoreIncrease = _removeAndScoreSpots(findConnectFive());
-    gameData.score += scoreIncrease;
-    gameData.turnsSkipped += connectFives.length;
+    _removeAndScoreSpots(findConnectFive());
     // Skip spot generation if there is a connectFive
     if (gameData.turnsSkipped > 0) {
       gameData.turnsSkipped -= 1;
@@ -37,9 +33,14 @@ class GameLogic {
     // spot generation
     generateOrbs();
     generatePreview();
+    if (gameData.generationNerf > 0) {
+      gameData.generationNerf -= 1;
+    }
+
     connectFives = findConnectFive();
     await onConnectFiveFound(connectFives.expand((i) => i).toList());
-    gameData.score += _removeAndScoreSpots(findConnectFive());
+    _removeAndScoreSpots(findConnectFive());
+
     gameData.saveData();
   }
 
@@ -134,8 +135,6 @@ class GameLogic {
         if (path.isNotEmpty) return path;
       }
     }
-
-    print(maxX);
 
     List xValues = [
       Iterable.generate(minX).toList().reversed,
@@ -266,29 +265,60 @@ class GameLogic {
     return occurrences;
   }
 
-  int _removeAndScoreSpots(List<List<Position>> spotsGroup) {
-    int score = 0;
+  void _removeAndScoreSpots(List<List<Position>> connectFives) {
+    // Calculate bonuses
     int bonusRemoval = 0;
+    int generationNerf = 0;
+    for (final connectFive in connectFives) {
+      int? score;
+      int connectFiveLength = connectFive.length;
 
-    for (var group in spotsGroup) {
+      if (connectFiveLength >= 9) {
+        gameData.turnsSkipped += 1;
+        bonusRemoval += 4;
+        generationNerf += 1;
+        score ??= 320;
+      }
+      if (connectFiveLength >= 8) {
+        gameData.circleSpots.removeWhere(
+            (key, value) => value == gameData.circleSpots[connectFive.first]);
+        bonusRemoval += 2;
+        generationNerf += 1;
+        score ??= 160;
+      }
+      if (connectFiveLength >= 7) {
+        generationNerf += 1;
+        score ??= 40;
+      }
+      if (connectFiveLength >= 6) {
+        bonusRemoval += 1;
+        score ??= 80;
+      }
+      if (connectFiveLength >= 5) {
+        gameData.turnsSkipped += 1;
+        score ??= 20;
+      }
+
+      gameData.score += score ?? 0;
+    }
+
+    // Remove connect fives
+    for (var group in connectFives) {
       int groupLength = group.length;
       if (groupLength >= 5) {
         for (var point in group) {
           gameData.circleSpots.remove(point);
         }
-
-        // Bonus scores
-        score += 20; // base score for five elements
-        if (groupLength > 5) {
-          int extraScoreIncrement = 10;
-          for (int i = 6; i <= groupLength; i++) {
-            extraScoreIncrement *= 2;
-          }
-          score += extraScoreIncrement;
-        }
-        bonusRemoval += groupLength - 5;
       }
     }
+
+    // apply generation nerf
+    for (int i = 0; i < generationNerf; i++) {
+      final randomKey = (gameData.nextBatchPreview.keys.toList()..shuffle())[0];
+      gameData.nextBatchPreview.remove(randomKey);
+    }
+    gameData.generationNerf += generationNerf;
+
     // Bonus spot removal
     for (int i = 0; i < bonusRemoval; i++) {
       if (gameData.circleSpots.isEmpty) {
@@ -299,7 +329,12 @@ class GameLogic {
       gameData.circleSpots.remove(randomKey);
     }
 
-    return score;
+    // Board clear
+    if (generationNerf > 7) {
+      generationNerf -= 7;
+      gameData.circleSpots.clear();
+      newTurn();
+    }
   }
 
   bool get gameOver {
@@ -307,16 +342,17 @@ class GameLogic {
   }
 
   int get numSpots {
+    int spots = 3;
     if (gameData.score > 10000) {
-      return 7;
+      spots = 7;
     } else if (gameData.score > 2000) {
-      return 6;
+      spots = 6;
     } else if (gameData.score > 500) {
-      return 5;
+      spots = 5;
     } else if (gameData.score > 100) {
-      return 4;
+      spots = 4;
     }
-    return 3;
+    return max(0, spots - gameData.generationNerf);
   }
 
   int get numColors {
