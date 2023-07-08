@@ -6,11 +6,14 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../constant.dart';
 
 class GameData {
-  int score = 0;
   int width = 10;
   int height = 15;
-  Map<Position, int> circleSpots = {};
+
+  int score = 0;
+  Map<Position, int> orbs = {};
   Map<Position, int> nextBatchPreview = {};
+
+  // Bonuses
   int turnsSkipped = 0;
   int generationNerf = 0;
 
@@ -18,7 +21,7 @@ class GameData {
 
   void clear() {
     score = 0;
-    circleSpots.clear();
+    orbs.clear();
     nextBatchPreview.clear();
     turnsSkipped = 0;
     generationNerf = 0;
@@ -42,7 +45,7 @@ class GameData {
   Map<String, dynamic> toJson() => {
         'score': score,
         'circleSpots':
-            circleSpots.map((k, v) => MapEntry('{"x":${k.x},"y":${k.y}}', v)),
+            orbs.map((k, v) => MapEntry('{"x":${k.x},"y":${k.y}}', v)),
         'nextBatchPreview': nextBatchPreview
             .map((k, v) => MapEntry('{"x":${k.x},"y":${k.y}}', v)),
         'turnsSkipped': turnsSkipped,
@@ -51,7 +54,7 @@ class GameData {
 
   void fromJson(Map<String, dynamic> json) {
     score = json['score'];
-    circleSpots = json.containsKey('circleSpots')
+    orbs = json.containsKey('circleSpots')
         ? (json['circleSpots'] as Map).map((k, v) =>
             MapEntry(Point(jsonDecode(k)['x'], jsonDecode(k)['y']), v))
         : {};

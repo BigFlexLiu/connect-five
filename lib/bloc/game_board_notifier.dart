@@ -57,7 +57,7 @@ class GameBoardNotifier extends ChangeNotifier {
       return;
     }
     terminalPosition = Point(x, y);
-    if (!gameData.circleSpots.containsKey(initialPosition)) {
+    if (!gameData.orbs.containsKey(initialPosition)) {
       return;
     }
     if (x >= 0 && x < WIDTH && y >= 0 && y < HEIGHT) {
@@ -98,7 +98,7 @@ class GameBoardNotifier extends ChangeNotifier {
   Future<void> _move(List<Position> path) async {
     Position current = path.first;
     for (Position position in path) {
-      gameData.circleSpots[position] = gameData.circleSpots.remove(current)!;
+      gameData.orbs[position] = gameData.orbs.remove(current)!;
       current = Point(position.x, position.y);
       await Future.delayed(const Duration(milliseconds: 50));
       notifyListeners();
@@ -106,17 +106,17 @@ class GameBoardNotifier extends ChangeNotifier {
   }
 
   Color? getPositionColor(Position pos) {
-    if (gameData.circleSpots.containsKey(pos)) {
-      return pathColors[gameData.circleSpots[pos]!];
+    if (gameData.orbs.containsKey(pos)) {
+      return pathColors[gameData.orbs[pos]!];
     } else if (movePath.contains(pos)) {
-      return pathColors[gameData.circleSpots[initialPosition]!];
+      return pathColors[gameData.orbs[initialPosition]!];
     }
     return null;
   }
 
   String? selectedSpotImage(Position pos) {
-    if (gameData.circleSpots.containsKey(pos)) {
-      return images[gameData.circleSpots[pos]!];
+    if (gameData.orbs.containsKey(pos)) {
+      return images[gameData.orbs[pos]!];
     }
     return null;
   }

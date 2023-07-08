@@ -22,7 +22,7 @@ class GameLogic {
   void newTurn() async {
     List<List<Position>> connectFives = findConnectFive();
     await onConnectFiveFound(connectFives.expand((i) => i).toList());
-    _removeAndScoreSpots(findConnectFive());
+    _clearConnectFives(findConnectFive());
     // Skip spot generation if there is a connectFive
     if (gameData.turnsSkipped > 0) {
       gameData.turnsSkipped -= 1;
@@ -39,7 +39,7 @@ class GameLogic {
 
     connectFives = findConnectFive();
     await onConnectFiveFound(connectFives.expand((i) => i).toList());
-    _removeAndScoreSpots(findConnectFive());
+    _clearConnectFives(findConnectFive());
 
     gameData.saveData();
   }
@@ -49,7 +49,7 @@ class GameLogic {
     int x, y;
     // Strategy 1
     // Collect free grids and select them at random
-    if (gameData.circleSpots.length >= gameData.width * gameData.height * 0.8) {
+    if (gameData.orbs.length >= gameData.width * gameData.height * 0.8) {
       var emptySpots = _getEmptyGrids();
       for (var i = 0; i < numSpots; i++) {
         if (emptySpots.isEmpty) {
@@ -68,20 +68,20 @@ class GameLogic {
       do {
         x = rng.nextInt(WIDTH);
         y = rng.nextInt(HEIGHT);
-      } while (gameData.circleSpots.containsKey(Point(x, y)));
-      gameData.circleSpots[Point(x, y)] = rng.nextInt(numColors);
+      } while (gameData.orbs.containsKey(Point(x, y)));
+      gameData.orbs[Point(x, y)] = rng.nextInt(numColors);
       gameData.nextBatchPreview[Point(x, y)] = rng.nextInt(numColors);
     }
     gameData.nextBatchPreview.forEach((key, value) {
-      gameData.circleSpots.remove(key);
+      gameData.orbs.remove(key);
     });
   }
 
   // Game logic
   void generateOrbs() {
     gameData.nextBatchPreview.forEach((key, value) {
-      if (!gameData.circleSpots.containsKey(key)) {
-        gameData.circleSpots[key] = value;
+      if (!gameData.orbs.containsKey(key)) {
+        gameData.orbs[key] = value;
       }
     });
     gameData.nextBatchPreview.clear();
@@ -92,7 +92,7 @@ class GameLogic {
     for (var xi = 0; xi < WIDTH; xi++) {
       for (var yi = 0; yi < HEIGHT; yi++) {
         var point = Point(xi, yi);
-        if (!gameData.circleSpots.containsKey(point)) {
+        if (!gameData.orbs.containsKey(point)) {
           emptySpots.add(point);
         }
       }
@@ -100,6 +100,7 @@ class GameLogic {
     return emptySpots;
   }
 
+  // Orb moves are restricted to a path composed of no more than 3 horizontal or vertical translations
   List<Position> generatePath(
       Position initialPosition, Position terminalPosition) {
     List<Position> path;
@@ -179,7 +180,7 @@ class GameLogic {
 
   bool _pathIntersectsCircle(List<Point> path) {
     // Exclude the initial position by skipping the first item in path
-    return path.skip(1).any((point) => gameData.circleSpots.containsKey(point));
+    return path.skip(1).any((point) => gameData.orbs.containsKey(point));
   }
 
   // Generates a path from start to end
@@ -205,13 +206,13 @@ class GameLogic {
 
     // Checks if a point on the board is occupied by a spot
     bool isPointOccupied(Position point) {
-      return gameData.circleSpots.containsKey(point);
+      return gameData.orbs.containsKey(point);
     }
 
     // Checks if the color of the spot at the given point is the same as the color of the last spot in the segment
     bool isSameColorAsLastSpot(Position point, List<Position> segment) {
       return segment.isEmpty ||
-          gameData.circleSpots[point] == gameData.circleSpots[segment.last];
+          gameData.orbs[point] == gameData.orbs[segment.last];
     }
 
     // Check rows
@@ -226,7 +227,7 @@ class GameLogic {
             occurrences.add(segment);
           }
           segment = [];
-          if (gameData.circleSpots.containsKey(point)) {
+          if (gameData.orbs.containsKey(point)) {
             segment.add(point);
           }
         }
@@ -250,7 +251,7 @@ class GameLogic {
             occurrences.add(segment);
           }
           segment = [];
-          if (gameData.circleSpots.containsKey(point)) {
+          if (gameData.orbs.containsKey(point)) {
             segment.add(point);
           }
         }
@@ -265,7 +266,7 @@ class GameLogic {
     return occurrences;
   }
 
-  void _removeAndScoreSpots(List<List<Position>> connectFives) {
+  void _clearConnectFives(List<List<Position>> connectFives) {
     // Calculate bonuses
     int bonusRemoval = 0;
     int generationNerf = 0;
@@ -280,8 +281,8 @@ class GameLogic {
         score ??= 320;
       }
       if (connectFiveLength >= 8) {
-        gameData.circleSpots.removeWhere(
-            (key, value) => value == gameData.circleSpots[connectFive.first]);
+        gameData.orbs.removeWhere(
+            (key, value) => value == gameData.orbs[connectFive.first]);
         bonusRemoval += 2;
         generationNerf += 1;
         score ??= 160;
@@ -307,7 +308,7 @@ class GameLogic {
       int groupLength = group.length;
       if (groupLength >= 5) {
         for (var point in group) {
-          gameData.circleSpots.remove(point);
+          gameData.orbs.remove(point);
         }
       }
     }
@@ -321,19 +322,12 @@ class GameLogic {
 
     // Bonus spot removal
     for (int i = 0; i < bonusRemoval; i++) {
-      if (gameData.circleSpots.isEmpty) {
+      if (gameData.orbs.isEmpty) {
         break;
       }
-      var randomIndex = Random().nextInt(gameData.circleSpots.length);
-      var randomKey = gameData.circleSpots.keys.elementAt(randomIndex);
-      gameData.circleSpots.remove(randomKey);
-    }
-
-    // Board clear
-    if (generationNerf > 7) {
-      generationNerf -= 7;
-      gameData.circleSpots.clear();
-      newTurn();
+      var randomIndex = Random().nextInt(gameData.orbs.length);
+      var randomKey = gameData.orbs.keys.elementAt(randomIndex);
+      gameData.orbs.remove(randomKey);
     }
   }
 
