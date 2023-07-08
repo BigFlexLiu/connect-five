@@ -15,6 +15,7 @@ class GameLogic {
     gameData.clear();
     generatePreview();
     newTurn();
+    print(gameData.board);
 
     gameData.saveData();
   }
@@ -49,7 +50,7 @@ class GameLogic {
     int x, y;
     // Strategy 1
     // Collect free grids and select them at random
-    if (gameData.orbs.length >= gameData.width * gameData.height * 0.8) {
+    if (gameData.board.length >= gameData.width * gameData.height * 0.8) {
       var emptySpots = _getEmptyGrids();
       for (var i = 0; i < numSpots; i++) {
         if (emptySpots.isEmpty) {
@@ -68,20 +69,20 @@ class GameLogic {
       do {
         x = rng.nextInt(WIDTH);
         y = rng.nextInt(HEIGHT);
-      } while (gameData.orbs.containsKey(Point(x, y)));
-      gameData.orbs[Point(x, y)] = rng.nextInt(numColors);
+      } while (gameData.at(Point(x, y)) != null);
+      gameData.setAt(Point(x, y), rng.nextInt(numColors));
       gameData.nextBatchPreview[Point(x, y)] = rng.nextInt(numColors);
     }
     gameData.nextBatchPreview.forEach((key, value) {
-      gameData.orbs.remove(key);
+      gameData.setAt(key, null);
     });
   }
 
   // Game logic
   void generateOrbs() {
-    gameData.nextBatchPreview.forEach((key, value) {
-      if (!gameData.orbs.containsKey(key)) {
-        gameData.orbs[key] = value;
+    gameData.nextBatchPreview.forEach((pos, value) {
+      if (gameData.at(pos) == null) {
+        gameData.setAt(pos, value);
       }
     });
     gameData.nextBatchPreview.clear();
@@ -92,7 +93,7 @@ class GameLogic {
     for (var xi = 0; xi < WIDTH; xi++) {
       for (var yi = 0; yi < HEIGHT; yi++) {
         var point = Point(xi, yi);
-        if (!gameData.orbs.containsKey(point)) {
+        if (gameData.at(point) == null) {
           emptySpots.add(point);
         }
       }
@@ -117,11 +118,11 @@ class GameLogic {
     Position midPoint2 = Point(terminalPosition.x, initialPosition.y);
 
     path = _linePath(initialPosition, midPoint1) +
-        _linePath(midPoint1, terminalPosition);
+        _linePath(midPoint1, terminalPosition).skip(1).toList();
     if (!_pathIntersectsCircle(path)) return path;
 
     path = _linePath(initialPosition, midPoint2) +
-        _linePath(midPoint2, terminalPosition);
+        _linePath(midPoint2, terminalPosition).skip(1).toList();
     if (!_pathIntersectsCircle(path)) return path;
 
     // Case 3: Two turns
@@ -163,24 +164,24 @@ class GameLogic {
     Position midPoint2 = Point(targetX, terminalPosition.y);
 
     List<Position> path = _linePath(initialPosition, midPoint1) +
-        _linePath(midPoint1, midPoint2) +
-        _linePath(midPoint2, terminalPosition);
+        _linePath(midPoint1, midPoint2).skip(1).toList() +
+        _linePath(midPoint2, terminalPosition).skip(1).toList();
     if (!_pathIntersectsCircle(path)) return path;
 
     midPoint1 = Point(initialPosition.x, targetY);
     midPoint2 = Point(terminalPosition.x, targetY);
 
     path = _linePath(initialPosition, midPoint1) +
-        _linePath(midPoint1, midPoint2) +
-        _linePath(midPoint2, terminalPosition);
+        _linePath(midPoint1, midPoint2).skip(1).toList() +
+        _linePath(midPoint2, terminalPosition).skip(1).toList();
     if (!_pathIntersectsCircle(path)) return path;
 
     return [];
   }
 
-  bool _pathIntersectsCircle(List<Point> path) {
+  bool _pathIntersectsCircle(List<Position> path) {
     // Exclude the initial position by skipping the first item in path
-    return path.skip(1).any((point) => gameData.orbs.containsKey(point));
+    return path.skip(1).any((point) => gameData.at(point) != null);
   }
 
   // Generates a path from start to end
@@ -206,13 +207,12 @@ class GameLogic {
 
     // Checks if a point on the board is occupied by a spot
     bool isPointOccupied(Position point) {
-      return gameData.orbs.containsKey(point);
+      return gameData.at(point) != null;
     }
 
     // Checks if the color of the spot at the given point is the same as the color of the last spot in the segment
     bool isSameColorAsLastSpot(Position point, List<Position> segment) {
-      return segment.isEmpty ||
-          gameData.orbs[point] == gameData.orbs[segment.last];
+      return segment.isEmpty || gameData.at(point) == gameData.at(segment.last);
     }
 
     // Check rows
@@ -227,7 +227,7 @@ class GameLogic {
             occurrences.add(segment);
           }
           segment = [];
-          if (gameData.orbs.containsKey(point)) {
+          if (gameData.at(point) != null) {
             segment.add(point);
           }
         }
@@ -251,7 +251,7 @@ class GameLogic {
             occurrences.add(segment);
           }
           segment = [];
-          if (gameData.orbs.containsKey(point)) {
+          if (gameData.at(point) != null) {
             segment.add(point);
           }
         }
@@ -281,8 +281,10 @@ class GameLogic {
         score ??= 320;
       }
       if (connectFiveLength >= 8) {
-        gameData.orbs.removeWhere(
-            (key, value) => value == gameData.orbs[connectFive.first]);
+        for (var element in gameData.board) {
+          element
+              .removeWhere((value) => value == gameData.at(connectFive.first));
+        }
         bonusRemoval += 2;
         generationNerf += 1;
         score ??= 160;
@@ -308,7 +310,7 @@ class GameLogic {
       int groupLength = group.length;
       if (groupLength >= 5) {
         for (var point in group) {
-          gameData.orbs.remove(point);
+          gameData.board.remove(point);
         }
       }
     }
@@ -321,13 +323,22 @@ class GameLogic {
     gameData.generationNerf += generationNerf;
 
     // Bonus spot removal
+    List<Position> taken = [];
+    for (var xi = 0; xi < WIDTH; xi++) {
+      for (var yi = 0; yi < HEIGHT; yi++) {
+        var point = Point(xi, yi);
+        if (gameData.at(point) != null) {
+          taken.add(point);
+        }
+      }
+    }
     for (int i = 0; i < bonusRemoval; i++) {
-      if (gameData.orbs.isEmpty) {
+      if (gameData.board.isEmpty) {
         break;
       }
-      var randomIndex = Random().nextInt(gameData.orbs.length);
-      var randomKey = gameData.orbs.keys.elementAt(randomIndex);
-      gameData.orbs.remove(randomKey);
+      var randomIndex = Random().nextInt(taken.length);
+      var randomPos = taken.elementAt(randomIndex);
+      gameData.setAt(randomPos, null);
     }
   }
 

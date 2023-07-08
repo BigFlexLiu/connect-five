@@ -10,18 +10,31 @@ class GameData {
   int height = 15;
 
   int score = 0;
-  Map<Position, int> orbs = {};
+  // Map<Position, int> orbs = {};
+  List<List<int?>> board = [];
   Map<Position, int> nextBatchPreview = {};
 
   // Bonuses
   int turnsSkipped = 0;
   int generationNerf = 0;
 
-  GameData();
+  GameData() {
+    newBoard();
+  }
+
+  void newBoard() {
+    board.clear();
+    for (int i = 0; i < width; i++) {
+      board.add([]);
+      for (int j = 0; j < height; j++) {
+        board[i].add(null);
+      }
+    }
+  }
 
   void clear() {
     score = 0;
-    orbs.clear();
+    newBoard();
     nextBatchPreview.clear();
     turnsSkipped = 0;
     generationNerf = 0;
@@ -44,8 +57,7 @@ class GameData {
 
   Map<String, dynamic> toJson() => {
         'score': score,
-        'circleSpots':
-            orbs.map((k, v) => MapEntry('{"x":${k.x},"y":${k.y}}', v)),
+        'board': json.encode(board),
         'nextBatchPreview': nextBatchPreview
             .map((k, v) => MapEntry('{"x":${k.x},"y":${k.y}}', v)),
         'turnsSkipped': turnsSkipped,
@@ -54,15 +66,24 @@ class GameData {
 
   void fromJson(Map<String, dynamic> json) {
     score = json['score'];
-    orbs = json.containsKey('circleSpots')
-        ? (json['circleSpots'] as Map).map((k, v) =>
-            MapEntry(Point(jsonDecode(k)['x'], jsonDecode(k)['y']), v))
-        : {};
+    List<dynamic> listDynamic = jsonDecode(json['board']);
+    board = listDynamic.map((listItem) {
+      List<int?> listItemInt = List<int?>.from(listItem);
+      return listItemInt;
+    }).toList();
     nextBatchPreview = json.containsKey('nextBatchPreview')
         ? (json['nextBatchPreview'] as Map).map((k, v) =>
             MapEntry(Point(jsonDecode(k)['x'], jsonDecode(k)['y']), v))
         : {};
     turnsSkipped = json['turnsSkipped'];
     generationNerf = json['generationNerf'];
+  }
+
+  int? at(Position pos) {
+    return board[pos.x][pos.y];
+  }
+
+  void setAt(Position pos, int? value) {
+    board[pos.x][pos.y] = value;
   }
 }
