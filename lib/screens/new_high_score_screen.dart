@@ -7,7 +7,7 @@ import '../bloc/game_board_notifier.dart';
 class CongratulationScreen extends StatefulWidget {
   final int score;
 
-  CongratulationScreen({Key? key, required this.score}) : super(key: key);
+  const CongratulationScreen({Key? key, required this.score}) : super(key: key);
 
   @override
   _CongratulationScreenState createState() => _CongratulationScreenState();
@@ -30,19 +30,19 @@ class _CongratulationScreenState extends State<CongratulationScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: <Widget>[
-          Text(
+          const Text(
             'You made it onto the leaderboard!',
             style: TextStyle(fontSize: 24.0),
           ),
-          SizedBox(height: 24.0),
+          const SizedBox(height: 24.0),
           Text(
             'Score: ${widget.score}',
-            style: TextStyle(fontSize: 24.0),
+            style: const TextStyle(fontSize: 24.0),
           ),
-          SizedBox(height: 24.0),
+          const SizedBox(height: 24.0),
           TextFormField(
             controller: _controller,
-            decoration: InputDecoration(
+            decoration: const InputDecoration(
               labelText: 'Enter your name',
             ),
             validator: (value) {
@@ -53,7 +53,7 @@ class _CongratulationScreenState extends State<CongratulationScreen> {
             },
           ),
           ElevatedButton(
-            child: Text('Submit'),
+            child: const Text('Submit'),
             onPressed: () {
               if (_formKey.currentState!.validate()) {
                 Provider.of<LeaderBoardProvider>(context, listen: false)

@@ -4,8 +4,6 @@ import 'package:provider/provider.dart';
 
 import '../bloc/game_board_notifier.dart';
 import 'end_game_screen.dart';
-import 'game_over_screen.dart';
-import 'menu.dart';
 
 class Home extends StatefulWidget {
   const Home({super.key});

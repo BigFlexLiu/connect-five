@@ -2,9 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../bloc/game_board_notifier.dart';
-import '../bloc/leaderboard.dart';
-import 'congratulation_screen.dart';
-import 'new_high_score_screen.dart';
 
 class GameOverScreen extends StatelessWidget {
   final int score;

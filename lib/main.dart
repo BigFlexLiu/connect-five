@@ -1,6 +1,4 @@
 import 'package:connect_five/bloc/game_board_notifier.dart';
-import 'package:connect_five/screens/game_screen.dart';
-import 'package:connect_five/screens/home.dart';
 import 'package:connect_five/screens/menu.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';

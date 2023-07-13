@@ -19,7 +19,7 @@ class GameBoardNotifier extends ChangeNotifier {
 
   GameBoardNotifier() {
     gameData = GameData();
-    gameLogic = GameLogic(gameData, onConnectFive);
+    gameLogic = GameLogic(gameData, onClear);
     _loadData();
   }
 
@@ -31,9 +31,19 @@ class GameBoardNotifier extends ChangeNotifier {
     notifyListeners();
 
     pause += 1;
-    await Future.delayed(Duration(milliseconds: 500));
+    await Future.delayed(const Duration(milliseconds: 500));
     connectiveFivePos.clear();
     pause -= 1;
+    notifyListeners();
+  }
+
+  void onClear(List<Position> cleared) async {
+    connectiveFivePos = List.from(cleared);
+    notifyListeners();
+    pause += 1;
+    await Future.delayed(const Duration(milliseconds: 500));
+    pause -= 1;
+    connectiveFivePos.clear();
     notifyListeners();
   }
 
@@ -44,6 +54,7 @@ class GameBoardNotifier extends ChangeNotifier {
 
   // User interaction
   void startTouch(int x, int y) {
+    print(gameLogic.numColors);
     if (pause != 0) {
       return;
     }
@@ -92,7 +103,18 @@ class GameBoardNotifier extends ChangeNotifier {
   }
 
   void newTurn() async {
-    gameLogic.newTurn();
+    gameLogic.nextTurn();
+    notifyListeners();
+  }
+
+  void shuffle() {
+    gameLogic.shuffle(gameData.board);
+    notifyListeners();
+  }
+
+  void clearBoard() {
+    gameData.newBoard();
+    newTurn();
     notifyListeners();
   }
 
@@ -131,5 +153,5 @@ class GameBoardNotifier extends ChangeNotifier {
   }
 
   int get score => gameData.score;
-  bool get gameOver => gameLogic.gameOver;
+  bool get gameOver => gameData.isGameOver;
 }

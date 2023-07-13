@@ -1,8 +1,6 @@
 import 'package:connect_five/screens/home.dart';
-import 'package:connect_five/screens/new_high_score_screen.dart';
 import 'package:flutter/material.dart';
 
-import 'game_screen.dart';
 import 'leaderboard_screen.dart';
 
 class Menu extends StatelessWidget {
@@ -44,7 +42,7 @@ class Menu extends StatelessWidget {
                     context,
                     MaterialPageRoute(
                         builder: (context) =>
-                            LeaderBoardScreen()), // replace with your actual settings screen widget
+                            const LeaderBoardScreen()), // replace with your actual settings screen widget
                   );
                 },
                 style: ElevatedButton.styleFrom(

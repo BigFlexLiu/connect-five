@@ -10,9 +10,15 @@ class GameData {
   int height = 15;
 
   int score = 0;
+  int freeSpots = 150;
+  bool isGameOver = false;
   // Map<Position, int> orbs = {};
   List<List<int?>> board = [];
   Map<Position, int> nextBatchPreview = {};
+  List<int> colorBan = List.filled(7, 0); // Key: color, value: num turn banned
+
+  List<Position> removeOnTurnEnd = [];
+  List<Position> matches = [];
 
   // Bonuses
   int turnsSkipped = 0;
@@ -38,6 +44,10 @@ class GameData {
     nextBatchPreview.clear();
     turnsSkipped = 0;
     generationNerf = 0;
+    isGameOver = false;
+    freeSpots = width * height;
+    removeOnTurnEnd.clear();
+    colorBan = List.filled(7, 0);
   }
 
   Future<void> saveData() async {
@@ -62,6 +72,8 @@ class GameData {
             .map((k, v) => MapEntry('{"x":${k.x},"y":${k.y}}', v)),
         'turnsSkipped': turnsSkipped,
         'generationNerf': generationNerf,
+        'freeSpots': freeSpots,
+        'colorBan': colorBan,
       };
 
   void fromJson(Map<String, dynamic> json) {
@@ -77,6 +89,8 @@ class GameData {
         : {};
     turnsSkipped = json['turnsSkipped'];
     generationNerf = json['generationNerf'];
+    freeSpots = json['freeSpots'];
+    colorBan = List<int>.from(json['colorBan']);
   }
 
   int? at(Position pos) {
@@ -84,6 +98,21 @@ class GameData {
   }
 
   void setAt(Position pos, int? value) {
+    if (at(pos) == null && value != null) {
+      print("-");
+      freeSpots -= 1;
+    } else if (at(pos) != null && value == null) {
+      print("+");
+      freeSpots += 1;
+    }
     board[pos.x][pos.y] = value;
+  }
+
+  void scheduleRemoval(Position pos) {
+    removeOnTurnEnd.add(pos);
+  }
+
+  void addMatches(Iterable<Position> newMatch) {
+    matches.addAll(newMatch);
   }
 }

@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../bloc/game_board_notifier.dart';
-import '../constant.dart';
 
 void main() {
   runApp(const MyApp());
@@ -53,6 +52,14 @@ class _GameScreenState extends State<GameScreen> {
             icon: const Icon(Icons.trending_flat),
             onPressed: () {
               Provider.of<GameBoardNotifier>(context, listen: false).newTurn();
+              // Handle settings button press
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.trending_flat),
+            onPressed: () {
+              Provider.of<GameBoardNotifier>(context, listen: false)
+                  .clearBoard();
               // Handle settings button press
             },
           ),
