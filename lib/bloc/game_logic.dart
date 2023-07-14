@@ -20,7 +20,7 @@ class GameLogic {
 
   void nextTurn() async {
     bool cleared = false;
-    while (await clear()) {
+    while (await clear(gameData.board)) {
       cleared = true;
     }
     // Skip orb generation
@@ -40,7 +40,7 @@ class GameLogic {
       return;
     }
 
-    // reduce ban turn count
+    // reduce color ban turn count
     for (int i = 0; i < gameData.colorBan.length; i++) {
       gameData.colorBan[i] = max(gameData.colorBan[i] - 1, 0);
     }
@@ -52,60 +52,56 @@ class GameLogic {
       gameData.generationNerf -= 1;
     }
 
-    while (await clear()) {
-      print("BYE");
+    while (await clear(gameData.board)) {}
+
+    // Ensure board has at least one orb as a safenet
+    // WARNING: should not be true, ever
+    if (gameData.openGrid == gameData.width * gameData.height) {
+      gameData.setAt(const Position(0, 0), 0);
     }
 
-    // Ensure board has at least one orb
-    if (gameData.freeSpots == gameData.width * gameData.height) {
-      generateOrbs();
-      generatePreview(numOrbsToGenerate);
-    }
-
-    print(gameData.freeSpots);
     gameData.saveData();
   }
 
-  Future<bool> clear() async {
+  // Clear all orbs in match or as bonus
+  // Leave at least one orb
+  Future<bool> clear(List<List<int?>> board) async {
     List<List<Position>> connectFives = findConnectFive();
     // final palindrome = findPalindromes(gameData.board);
-    final pluses = findThreePlusThree(gameData.board);
+    final pluses = findThreePlusThree(board);
     final cleared = connectFives + pluses;
     if (cleared.isEmpty) {
       return false;
     }
 
-    _clearConnectFives(connectFives);
-    clearThreePlusThrees(pluses);
-    // clearPalindrome(palindrome);
-    print(gameData.removeOnTurnEnd);
-    print(gameData.matches);
+    int scoresEarned = _clearConnectFives(connectFives);
+    scoresEarned += clearThreePlusThrees(pluses);
+    gameData.score += scoresEarned;
 
     // Clear all orbs in match and scheduled for clear
     await onClear(gameData.matches);
-    print(gameData.removeOnTurnEnd);
-    print(gameData.matches);
     for (Position pos in gameData.matches) {
+      if (gameData.openGrid == WIDTH * HEIGHT - 1) {
+        break;
+      }
       gameData.setAt(pos, null);
     }
     gameData.matches.clear();
     await onClear(gameData.removeOnTurnEnd);
-    print(gameData.removeOnTurnEnd);
-    print(gameData.matches);
     for (Position pos in gameData.removeOnTurnEnd) {
+      if (gameData.openGrid == WIDTH * HEIGHT - 1) {
+        break;
+      }
       gameData.setAt(pos, null);
     }
     gameData.removeOnTurnEnd.clear();
-
-    // if (palindrome.isNotEmpty) {
-    //   shuffle(gameData.board);
-    // }
 
     return true;
   }
 
   void generatePreview(int numOrbs) {
     List<int> colors = [];
+    // Collect all available colors
     for (int i = 0; i < numColors; i++) {
       if (gameData.colorBan[i] == 0) {
         colors.add(i);
@@ -115,55 +111,51 @@ class GameLogic {
       return;
     }
 
+    // Generate orbs preview
     var rng = Random();
-    // int x, y;
-    // Strategy 1
-    // Collect free grids and select them at random
-    // if (gameData.board.length >= gameData.width * gameData.height * 0.8) {
-    var emptySpots = _getEmptyGrids();
+    var emptyGrids = _getEmptyGrids();
     for (var i = 0; i < numOrbs; i++) {
-      if (emptySpots.isEmpty) {
+      if (emptyGrids.isEmpty) {
         gameData.isGameOver = true;
         return;
       }
-      final randInt = rng.nextInt(emptySpots.length);
-      var spot = emptySpots[randInt];
-      emptySpots.removeAt(randInt);
+      final randInt = rng.nextInt(emptyGrids.length);
+      var spot = emptyGrids[randInt];
+      emptyGrids.removeAt(randInt);
 
-      gameData.nextBatchPreview[spot] = colors[rng.nextInt(colors.length)];
+      gameData.nextGenerationPreview[spot] = colors[rng.nextInt(colors.length)];
     }
     return;
   }
 
   // Game logic
   void generateOrbs() {
-    gameData.nextBatchPreview.forEach((pos, value) {
+    gameData.nextGenerationPreview.forEach((pos, value) {
       if (gameData.at(pos) == null) {
         gameData.setAt(pos, value);
       }
     });
-    gameData.nextBatchPreview.clear();
+    gameData.nextGenerationPreview.clear();
   }
 
   List<Position> _getEmptyGrids() {
-    List<Position> emptySpots = [];
-    for (var xi = 0; xi < WIDTH; xi++) {
-      for (var yi = 0; yi < HEIGHT; yi++) {
-        var point = Point(xi, yi);
+    List<Position> emptyGrids = [];
+    for (var i = 0; i < WIDTH; i++) {
+      for (var j = 0; j < HEIGHT; j++) {
+        var point = Point(i, j);
         if (gameData.at(point) == null) {
-          emptySpots.add(point);
+          emptyGrids.add(point);
         }
       }
     }
-    return emptySpots;
+    return emptyGrids;
   }
 
   bool checkGameOver() {
-    if (numOrbsToGenerate > gameData.freeSpots) {
+    if (numOrbsToGenerate > gameData.openGrid) {
       gameData.isGameOver = true;
-      return true;
     }
-    return false;
+    return gameData.isGameOver;
   }
 
   // Orb moves are restricted to a path composed of no more than 3 horizontal or vertical translations
@@ -331,24 +323,25 @@ class GameLogic {
     return occurrences;
   }
 
-  void _clearConnectFives(List<List<Position>> connectFives) {
+  int _clearConnectFives(List<List<Position>> connectFives) {
     gameData.addMatches(connectFives.expand((i) => i).toList());
     // Calculate bonuses
     int bonusRemoval = 0;
     int generationNerf = 0;
+    int scoresEarned = 0;
     for (final connectFive in connectFives) {
       assert(connectFive.length >= 5);
-      int? score;
       int connectFiveLength = connectFive.length;
       int color = gameData.at(connectFive.first)!;
 
       if (connectFiveLength >= 9) {
         // Color does not generate for the next five rounds of generation
         gameData.colorBan[gameData.at(connectFive[0])!] = 5;
-        gameData.nextBatchPreview.removeWhere((key, value) => value == color);
+        gameData.nextGenerationPreview
+            .removeWhere((key, value) => value == color);
         bonusRemoval += 4;
         generationNerf += 1;
-        score ??= 100;
+        scoresEarned += 100;
       }
       if (connectFiveLength >= 8) {
         // Remove all orbs with the same color as the connect five
@@ -362,23 +355,21 @@ class GameLogic {
         }
         bonusRemoval += 3;
         generationNerf += 1;
-        score ??= 80;
+        scoresEarned += 80;
       }
       if (connectFiveLength >= 7) {
         bonusRemoval += 2;
         generationNerf += 1;
-        score ??= 60;
+        scoresEarned += 60;
       }
       if (connectFiveLength >= 6) {
         bonusRemoval += 1;
-        score ??= 40;
+        scoresEarned += 40;
       }
       if (connectFiveLength >= 5) {
         gameData.turnsSkipped += 1;
-        score ??= 20;
+        scoresEarned += 20;
       }
-
-      gameData.score += score ?? 0;
     }
 
     // Remove connect fives
@@ -388,11 +379,12 @@ class GameLogic {
 
     // apply generation nerf
     for (int i = 0; i < generationNerf; i++) {
-      if (gameData.nextBatchPreview.isEmpty) {
+      if (gameData.nextGenerationPreview.isEmpty) {
         break;
       }
-      final randomKey = (gameData.nextBatchPreview.keys.toList()..shuffle())[0];
-      gameData.nextBatchPreview.remove(randomKey);
+      final randomKey =
+          (gameData.nextGenerationPreview.keys.toList()..shuffle())[0];
+      gameData.nextGenerationPreview.remove(randomKey);
     }
     gameData.generationNerf += generationNerf;
 
@@ -417,8 +409,10 @@ class GameLogic {
       taken.removeAt(randomIndex);
       gameData.scheduleRemoval(randomPos);
     }
+    return scoresEarned;
   }
 
+  // NOTE: Unused
   List<List<Point<int>>> findPalindromes(List<List<int?>> board) {
     const int minLength = 7;
     List<List<Point<int>>> palindromes = [];
@@ -496,6 +490,7 @@ class GameLogic {
     return filterOutContainedPalindromes(palindromes);
   }
 
+  // Note: Unused
   void clearPalindrome(List<List<Point<int>>> palindrome) {
     if (palindrome.isNotEmpty) {
       gameData.generationNerf += numOrbsToGenerate;
@@ -506,6 +501,7 @@ class GameLogic {
     }
   }
 
+  // Note: Unused
   void shuffle(List<List<int?>> board) {
     List<int?> shuffleBoard = board.expand((i) => i).toList();
     shuffleBoard.shuffle();
@@ -549,13 +545,14 @@ class GameLogic {
           }
         }
       }
-      print(threePlusThree);
     }
     return threePlusThree;
   }
 
   // Pluses cause its column and row to be cleared
-  void clearThreePlusThrees(List<List<Position>> pluses) {
+  // Produces the number of score earned
+  int clearThreePlusThrees(List<List<Position>> pluses) {
+    int scoreEarned = 0;
     for (final plus in pluses) {
       gameData.addMatches(plus);
 
@@ -573,7 +570,7 @@ class GameLogic {
           continue;
         }
         gameData.scheduleRemoval(pos);
-        gameData.score += 1;
+        scoreEarned += 1;
       }
       for (int i = 0; i < gameData.width; i++) {
         final pos = Position(i, row);
@@ -581,38 +578,41 @@ class GameLogic {
           continue;
         }
         gameData.scheduleRemoval(pos);
-        gameData.score += 1;
+        scoreEarned += 1;
       }
-      gameData.score += 5;
+      scoreEarned += 5;
     }
+    return scoreEarned;
   }
 
   bool get gameOver {
     return _getEmptyGrids().isEmpty;
   }
 
-  int get numOrbsToGenerate {
-    int spots = 3;
-    if (gameData.score > 7000) {
-      spots = 7;
+  int get numOrbsToGenerate =>
+      max(0, numOrbsToGenerateBeforeNerf - gameData.generationNerf);
+
+  int get numOrbsToGenerateBeforeNerf {
+    if (gameData.score > 8000) {
+      return 7;
+    } else if (gameData.score > 6000) {
+      return 6;
+    } else if (gameData.score > 4000) {
+      return 5;
     } else if (gameData.score > 2000) {
-      spots = 6;
-    } else if (gameData.score > 500) {
-      spots = 5;
-    } else if (gameData.score > 100) {
-      spots = 4;
+      return 4;
     }
-    return max(0, spots - gameData.generationNerf);
+    return 3;
   }
 
   int get numColors {
     if (gameData.score > 10000) {
       return 7;
-    } else if (gameData.score > 4000) {
+    } else if (gameData.score > 5000) {
       return 6;
-    } else if (gameData.score > 1000) {
+    } else if (gameData.score > 3000) {
       return 5;
-    } else if (gameData.score > 200) {
+    } else if (gameData.score > 1000) {
       return 4;
     }
     return 3;

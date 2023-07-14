@@ -80,6 +80,7 @@ class _GameScreenState extends State<GameScreen> {
                 children: <Widget>[
                   SizedBox(height: viewportConstraints.maxHeight * 0.02),
                   Padding(
+                    padding: const EdgeInsetsDirectional.symmetric(horizontal: 8.0),
                     child: Row(
                       children: [
                         Icon(
@@ -89,21 +90,20 @@ class _GameScreenState extends State<GameScreen> {
                         ),
                         Text(
                             "${gameBoard.orbNum}${gameBoard.generationNerf > 0 ? " (- ${gameBoard.generationNerf})" : ""}"),
-                        Spacer(),
+                        const Spacer(),
                         Text(
                           'Score: ${Provider.of<GameBoardNotifier>(context).score}',
-                          style: TextStyle(
+                          style: const TextStyle(
                               fontWeight: FontWeight.bold, fontSize: 24),
                         ),
-                        Spacer(),
-                        Icon(
+                        const Spacer(),
+                        const Icon(
                           Icons.hourglass_disabled,
                           size: 24,
                         ),
                         Text("${gameBoard.turnsPaused}"),
                       ],
                     ),
-                    padding: EdgeInsetsDirectional.symmetric(horizontal: 8.0),
                   ),
                   SizedBox(height: viewportConstraints.maxHeight * 0.02),
                   SizedBox(

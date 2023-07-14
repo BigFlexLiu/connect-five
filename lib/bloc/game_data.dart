@@ -10,13 +10,14 @@ class GameData {
   int height = 15;
 
   int score = 0;
-  int freeSpots = 150;
+  int openGrid = 150; // Number of grids without an orb on it
   bool isGameOver = false;
-  // Map<Position, int> orbs = {};
+
   List<List<int?>> board = [];
-  Map<Position, int> nextBatchPreview = {};
+  Map<Position, int> nextGenerationPreview = {};
   List<int> colorBan = List.filled(7, 0); // Key: color, value: num turn banned
 
+  // Midturn information
   List<Position> removeOnTurnEnd = [];
   List<Position> matches = [];
 
@@ -41,11 +42,11 @@ class GameData {
   void clear() {
     score = 0;
     newBoard();
-    nextBatchPreview.clear();
+    nextGenerationPreview.clear();
     turnsSkipped = 0;
     generationNerf = 0;
     isGameOver = false;
-    freeSpots = width * height;
+    openGrid = width * height;
     removeOnTurnEnd.clear();
     colorBan = List.filled(7, 0);
   }
@@ -68,11 +69,11 @@ class GameData {
   Map<String, dynamic> toJson() => {
         'score': score,
         'board': json.encode(board),
-        'nextBatchPreview': nextBatchPreview
+        'nextBatchPreview': nextGenerationPreview
             .map((k, v) => MapEntry('{"x":${k.x},"y":${k.y}}', v)),
         'turnsSkipped': turnsSkipped,
         'generationNerf': generationNerf,
-        'freeSpots': freeSpots,
+        'freeSpots': openGrid,
         'colorBan': colorBan,
       };
 
@@ -83,13 +84,13 @@ class GameData {
       List<int?> listItemInt = List<int?>.from(listItem);
       return listItemInt;
     }).toList();
-    nextBatchPreview = json.containsKey('nextBatchPreview')
+    nextGenerationPreview = json.containsKey('nextBatchPreview')
         ? (json['nextBatchPreview'] as Map).map((k, v) =>
             MapEntry(Point(jsonDecode(k)['x'], jsonDecode(k)['y']), v))
         : {};
     turnsSkipped = json['turnsSkipped'];
     generationNerf = json['generationNerf'];
-    freeSpots = json['freeSpots'];
+    openGrid = json['freeSpots'];
     colorBan = List<int>.from(json['colorBan']);
   }
 
@@ -99,11 +100,9 @@ class GameData {
 
   void setAt(Position pos, int? value) {
     if (at(pos) == null && value != null) {
-      print("-");
-      freeSpots -= 1;
+      openGrid -= 1;
     } else if (at(pos) != null && value == null) {
-      print("+");
-      freeSpots += 1;
+      openGrid += 1;
     }
     board[pos.x][pos.y] = value;
   }

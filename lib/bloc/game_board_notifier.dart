@@ -14,27 +14,13 @@ class GameBoardNotifier extends ChangeNotifier {
   Position initialPosition = const Point(0, 0);
   Position terminalPosition = const Point(0, 0);
   List<Position> movePath = [];
-  int pause = 0; // semaphore, 0 is false, 1+ is true
+  int pause = 0; // semaphore, 0 is false, 1+ is true. For animation
   List<Position> connectiveFivePos = [];
 
   GameBoardNotifier() {
     gameData = GameData();
     gameLogic = GameLogic(gameData, onClear);
     _loadData();
-  }
-
-  void onConnectFive(List<Position> connectFives) async {
-    if (connectFives.isEmpty) {
-      return;
-    }
-    connectiveFivePos = connectFives;
-    notifyListeners();
-
-    pause += 1;
-    await Future.delayed(const Duration(milliseconds: 500));
-    connectiveFivePos.clear();
-    pause -= 1;
-    notifyListeners();
   }
 
   void onClear(List<Position> cleared) async {
@@ -54,7 +40,7 @@ class GameBoardNotifier extends ChangeNotifier {
 
   // User interaction
   void startTouch(int x, int y) {
-    print(gameLogic.numColors);
+    print(gameData.openGrid);
     if (pause != 0) {
       return;
     }
@@ -85,7 +71,6 @@ class GameBoardNotifier extends ChangeNotifier {
       notifyListeners();
       return;
     }
-    print(movePath);
     final path = movePath;
     movePath = [];
 
@@ -146,8 +131,8 @@ class GameBoardNotifier extends ChangeNotifier {
   }
 
   String? previewImage(Position pos) {
-    if (gameData.nextBatchPreview.containsKey(pos)) {
-      return previewImages[gameData.nextBatchPreview[pos]!];
+    if (gameData.nextGenerationPreview.containsKey(pos)) {
+      return previewImages[gameData.nextGenerationPreview[pos]!];
     }
     return null;
   }
