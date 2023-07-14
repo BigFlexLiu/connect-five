@@ -1,6 +1,5 @@
 import 'dart:math';
 
-
 import '../constant.dart';
 import 'game_data.dart';
 
@@ -77,7 +76,7 @@ class GameLogic {
     }
 
     _clearConnectFives(connectFives);
-    clearPluses(pluses);
+    clearThreePlusThrees(pluses);
     // clearPalindrome(palindrome);
     print(gameData.removeOnTurnEnd);
     print(gameData.matches);
@@ -349,7 +348,7 @@ class GameLogic {
         gameData.nextBatchPreview.removeWhere((key, value) => value == color);
         bonusRemoval += 4;
         generationNerf += 1;
-        score ??= 800;
+        score ??= 100;
       }
       if (connectFiveLength >= 8) {
         // Remove all orbs with the same color as the connect five
@@ -363,20 +362,20 @@ class GameLogic {
         }
         bonusRemoval += 3;
         generationNerf += 1;
-        score ??= 400;
+        score ??= 80;
       }
       if (connectFiveLength >= 7) {
         bonusRemoval += 2;
         generationNerf += 1;
-        score ??= 200;
+        score ??= 60;
       }
       if (connectFiveLength >= 6) {
         bonusRemoval += 1;
-        score ??= 100;
+        score ??= 40;
       }
       if (connectFiveLength >= 5) {
         gameData.turnsSkipped += 1;
-        score ??= 50;
+        score ??= 20;
       }
 
       gameData.score += score ?? 0;
@@ -402,7 +401,9 @@ class GameLogic {
     for (var xi = 0; xi < WIDTH; xi++) {
       for (var yi = 0; yi < HEIGHT; yi++) {
         var point = Point(xi, yi);
-        if (gameData.at(point) != null) {
+        if (gameData.at(point) != null &&
+            !gameData.matches.contains(point) &&
+            !gameData.removeOnTurnEnd.contains(point)) {
           taken.add(point);
         }
       }
@@ -413,6 +414,7 @@ class GameLogic {
       }
       var randomIndex = Random().nextInt(taken.length);
       var randomPos = taken.elementAt(randomIndex);
+      taken.removeAt(randomIndex);
       gameData.scheduleRemoval(randomPos);
     }
   }
@@ -529,55 +531,59 @@ class GameLogic {
             if (element.any((element) => gameData.at(element) == null)) {
               return true;
             }
-            if (Set.from(element.map((e) => gameData.at(e))).length > 1) {
+            if (gameData.at(element[0]) != gameData.at(element[1]) ||
+                gameData.at(element[1]) != gameData.at(element[2])) {
               return true;
             }
             return false;
           });
         }
 
+        // Find three by three
         for (final vertical in verticals) {
           for (final horizontal in horizontals) {
-            if (vertical[0] == horizontal[0]) {
+            if (gameData.at(vertical[0]) == gameData.at(horizontal[0])) {
               threePlusThree
                   .add(Set<Position>.from((vertical + horizontal)).toList());
             }
           }
         }
       }
+      print(threePlusThree);
     }
     return threePlusThree;
   }
 
   // Pluses cause its column and row to be cleared
-  void clearPluses(List<List<Position>> pluses) {
+  void clearThreePlusThrees(List<List<Position>> pluses) {
     for (final plus in pluses) {
       gameData.addMatches(plus);
 
-      // find column
-      final col =
-          plus.fold(0, (previousValue, element) => previousValue + element.x) ~/
-              5;
+      // find column (median)
+      final x = plus.map((e) => e.x).toList()..sort();
+      final col = x[2];
       // find row
-      final row =
-          plus.fold(0, (previousValue, element) => previousValue + element.y) ~/
-              5;
+      final y = plus.map((e) => e.y).toList()..sort();
+      final row = y[2];
 
       // Clear row and column
       for (int i = 0; i < gameData.height; i++) {
         final pos = Position(col, i);
-        if (plus.contains(pos)) {
+        if (plus.contains(pos) || gameData.at(pos) == null) {
           continue;
         }
         gameData.scheduleRemoval(pos);
+        gameData.score += 1;
       }
       for (int i = 0; i < gameData.width; i++) {
         final pos = Position(i, row);
-        if (plus.contains(pos)) {
+        if (plus.contains(pos) || gameData.at(pos) == null) {
           continue;
         }
         gameData.scheduleRemoval(pos);
+        gameData.score += 1;
       }
+      gameData.score += 5;
     }
   }
 
@@ -587,7 +593,7 @@ class GameLogic {
 
   int get numOrbsToGenerate {
     int spots = 3;
-    if (gameData.score > 10000) {
+    if (gameData.score > 7000) {
       spots = 7;
     } else if (gameData.score > 2000) {
       spots = 6;
@@ -600,9 +606,9 @@ class GameLogic {
   }
 
   int get numColors {
-    if (gameData.score > 20000) {
+    if (gameData.score > 10000) {
       return 7;
-    } else if (gameData.score > 5000) {
+    } else if (gameData.score > 4000) {
       return 6;
     } else if (gameData.score > 1000) {
       return 5;

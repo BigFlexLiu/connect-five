@@ -154,4 +154,8 @@ class GameBoardNotifier extends ChangeNotifier {
 
   int get score => gameData.score;
   bool get gameOver => gameData.isGameOver;
+  int get orbNum => gameLogic.numOrbsToGenerate + generationNerf;
+  int get generationNerf => gameData.generationNerf;
+  int get newestColor => gameLogic.numColors - 1;
+  int get turnsPaused => gameData.turnsSkipped;
 }

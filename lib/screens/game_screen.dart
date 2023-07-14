@@ -1,5 +1,6 @@
 import 'dart:math';
 
+import 'package:connect_five/constant.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -67,6 +68,7 @@ class _GameScreenState extends State<GameScreen> {
       ),
       body: LayoutBuilder(
         builder: (BuildContext context, BoxConstraints viewportConstraints) {
+          final gameBoard = Provider.of<GameBoardNotifier>(context);
           return SingleChildScrollView(
             child: ConstrainedBox(
               constraints: BoxConstraints(
@@ -76,10 +78,34 @@ class _GameScreenState extends State<GameScreen> {
                 mainAxisSize: MainAxisSize.min,
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: <Widget>[
-                  SizedBox(height: viewportConstraints.maxHeight * 0.05),
-                  Text(
-                      'Score: ${Provider.of<GameBoardNotifier>(context).score}'),
-                  SizedBox(height: viewportConstraints.maxHeight * 0.05),
+                  SizedBox(height: viewportConstraints.maxHeight * 0.02),
+                  Padding(
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.add_circle,
+                          size: 24,
+                          color: pathColors[gameBoard.newestColor],
+                        ),
+                        Text(
+                            "${gameBoard.orbNum}${gameBoard.generationNerf > 0 ? " (- ${gameBoard.generationNerf})" : ""}"),
+                        Spacer(),
+                        Text(
+                          'Score: ${Provider.of<GameBoardNotifier>(context).score}',
+                          style: TextStyle(
+                              fontWeight: FontWeight.bold, fontSize: 24),
+                        ),
+                        Spacer(),
+                        Icon(
+                          Icons.hourglass_disabled,
+                          size: 24,
+                        ),
+                        Text("${gameBoard.turnsPaused}"),
+                      ],
+                    ),
+                    padding: EdgeInsetsDirectional.symmetric(horizontal: 8.0),
+                  ),
+                  SizedBox(height: viewportConstraints.maxHeight * 0.02),
                   SizedBox(
                       height: viewportConstraints.maxHeight * 0.8,
                       child: LayoutBuilder(
