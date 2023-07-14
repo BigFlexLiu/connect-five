@@ -33,39 +33,24 @@ class _GameScreenState extends State<GameScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () {
-            Navigator.pop(context);
-            // Handle back button press
-          },
-        ),
-        title: const Text('Connect Five'),
-        actions: <Widget>[
-          IconButton(
-            icon: const Icon(Icons.refresh),
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back),
             onPressed: () {
-              Provider.of<GameBoardNotifier>(context, listen: false).newGame();
+              Navigator.pop(context);
               // Handle back button press
             },
           ),
-          IconButton(
-            icon: const Icon(Icons.trending_flat),
-            onPressed: () {
-              Provider.of<GameBoardNotifier>(context, listen: false).newTurn();
-              // Handle settings button press
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.trending_flat),
-            onPressed: () {
-              Provider.of<GameBoardNotifier>(context, listen: false)
-                  .clearBoard();
-              // Handle settings button press
-            },
-          ),
-        ],
-      ),
+          title: const Text('Connect Five'),
+          actions: <Widget>[
+            IconButton(
+              icon: const Icon(Icons.refresh),
+              onPressed: () {
+                Provider.of<GameBoardNotifier>(context, listen: false)
+                    .newGame();
+                // Handle back button press
+              },
+            ),
+          ]),
       body: LayoutBuilder(
         builder: (BuildContext context, BoxConstraints viewportConstraints) {
           final gameBoard = Provider.of<GameBoardNotifier>(context);
@@ -80,7 +65,8 @@ class _GameScreenState extends State<GameScreen> {
                 children: <Widget>[
                   SizedBox(height: viewportConstraints.maxHeight * 0.02),
                   Padding(
-                    padding: const EdgeInsetsDirectional.symmetric(horizontal: 8.0),
+                    padding:
+                        const EdgeInsetsDirectional.symmetric(horizontal: 8.0),
                     child: Row(
                       children: [
                         Icon(

@@ -597,9 +597,9 @@ class GameLogic {
       return 7;
     } else if (gameData.score > 6000) {
       return 6;
-    } else if (gameData.score > 4000) {
-      return 5;
     } else if (gameData.score > 2000) {
+      return 5;
+    } else if (gameData.score > 200) {
       return 4;
     }
     return 3;
@@ -608,11 +608,11 @@ class GameLogic {
   int get numColors {
     if (gameData.score > 10000) {
       return 7;
-    } else if (gameData.score > 5000) {
+    } else if (gameData.score > 4000) {
       return 6;
-    } else if (gameData.score > 3000) {
-      return 5;
     } else if (gameData.score > 1000) {
+      return 5;
+    } else if (gameData.score > 500) {
       return 4;
     }
     return 3;

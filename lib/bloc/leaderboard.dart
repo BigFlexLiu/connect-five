@@ -12,14 +12,7 @@ class PlayerScore {
 
 class LeaderBoard {
   final length = 10;
-  List<PlayerScore> _scores = [
-    PlayerScore("bob rose", 1000),
-    PlayerScore("Flex liu", 1500),
-    PlayerScore("ana bell", 10001),
-    PlayerScore("Sab rina", 1402),
-    PlayerScore("Ali ex", 103),
-    PlayerScore("Dave id", 1),
-  ];
+  List<PlayerScore> _scores = [];
 
   LeaderBoard();
 
@@ -80,4 +73,6 @@ class LeaderBoardProvider with ChangeNotifier {
       _leaderBoard = LeaderBoard.fromScores(scores);
     }
   }
+
+  get isLeaderBoardEmpty => leaderBoard._scores.isEmpty;
 }

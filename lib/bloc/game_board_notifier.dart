@@ -40,7 +40,7 @@ class GameBoardNotifier extends ChangeNotifier {
 
   // User interaction
   void startTouch(int x, int y) {
-    print(gameData.openGrid);
+    print(gameData.generationNerf);
     if (pause != 0) {
       return;
     }
