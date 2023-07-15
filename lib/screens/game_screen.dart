@@ -1,5 +1,6 @@
 import 'dart:math';
 
+import 'package:audioplayers/audioplayers.dart';
 import 'package:connect_five/constant.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -29,8 +30,21 @@ class GameScreen extends StatefulWidget {
 }
 
 class _GameScreenState extends State<GameScreen> {
+  void playSound() async {
+    final player = AudioPlayer();
+
+    await player.play(
+      AssetSource('pop_short.mp3'),
+      mode: PlayerMode.lowLatency,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    if (Provider.of<GameBoardNotifier>(context).playSound) {
+      Provider.of<GameBoardNotifier>(context).playSound = false;
+      playSound();
+    }
     return Scaffold(
       appBar: AppBar(
           leading: IconButton(
@@ -47,6 +61,13 @@ class _GameScreenState extends State<GameScreen> {
               onPressed: () {
                 Provider.of<GameBoardNotifier>(context, listen: false)
                     .newGame();
+                // Handle back button press
+              },
+            ),
+            IconButton(
+              icon: const Icon(Icons.refresh),
+              onPressed: () {
+                playSound();
                 // Handle back button press
               },
             ),

@@ -16,6 +16,7 @@ class GameBoardNotifier extends ChangeNotifier {
   List<Position> movePath = [];
   int pause = 0; // semaphore, 0 is false, 1+ is true. For animation
   List<Position> connectiveFivePos = [];
+  bool playSound = false;
 
   GameBoardNotifier() {
     gameData = GameData();
@@ -24,12 +25,17 @@ class GameBoardNotifier extends ChangeNotifier {
   }
 
   void onClear(List<Position> cleared) async {
+    if (cleared.isEmpty) {
+      return;
+    }
     connectiveFivePos = List.from(cleared);
     notifyListeners();
     pause += 1;
     await Future.delayed(const Duration(milliseconds: 500));
     pause -= 1;
     connectiveFivePos.clear();
+
+    playSound = true;
     notifyListeners();
   }
 
