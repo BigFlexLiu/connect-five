@@ -13,7 +13,7 @@ class LeaderBoardScreen extends StatelessWidget {
         title: const Text('Leaderboard'),
         actions: <Widget>[
           IconButton(
-            icon: const Icon(Icons.clear_all),
+            icon: const Icon(Icons.delete),
             onPressed: () {
               showDialog(
                 context: context,
@@ -43,7 +43,7 @@ class LeaderBoardScreen extends StatelessWidget {
       body: Consumer<LeaderBoardProvider>(
         builder: (context, leaderboardProvider, child) {
           if (leaderboardProvider.isLeaderBoardEmpty) {
-            return Center(
+            return const Center(
                 child: Text(
               "Nothing to see here.",
               style: TextStyle(fontSize: 24),

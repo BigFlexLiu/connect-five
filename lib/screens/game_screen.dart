@@ -64,13 +64,6 @@ class _GameScreenState extends State<GameScreen> {
                 // Handle back button press
               },
             ),
-            IconButton(
-              icon: const Icon(Icons.refresh),
-              onPressed: () {
-                playSound();
-                // Handle back button press
-              },
-            ),
           ]),
       body: LayoutBuilder(
         builder: (BuildContext context, BoxConstraints viewportConstraints) {
