@@ -16,12 +16,12 @@ class GameBoardNotifier extends ChangeNotifier {
   List<Position> movePath = [];
   int pause = 0; // semaphore, 0 is false, 1+ is true. For animation
   List<Position> connectiveFivePos = [];
-  bool playSound = false;
 
-  GameBoardNotifier() {
-    gameData = GameData();
+  GameBoardNotifier(int width, int height) {
+    gameData = GameData(width, height);
     gameLogic = GameLogic(gameData, onClear);
     _loadData();
+    notifyListeners();
   }
 
   void onClear(List<Position> cleared) async {
@@ -34,8 +34,7 @@ class GameBoardNotifier extends ChangeNotifier {
     await Future.delayed(const Duration(milliseconds: 500));
     pause -= 1;
     connectiveFivePos.clear();
-
-    playSound = true;
+    gameLogic.playSound();
     notifyListeners();
   }
 
@@ -46,7 +45,6 @@ class GameBoardNotifier extends ChangeNotifier {
 
   // User interaction
   void startTouch(int x, int y) {
-    print(gameData.generationNerf);
     if (pause != 0) {
       return;
     }
@@ -63,7 +61,7 @@ class GameBoardNotifier extends ChangeNotifier {
     if (gameData.at(initialPosition) == null) {
       return;
     }
-    if (x >= 0 && x < WIDTH && y >= 0 && y < HEIGHT) {
+    if (x >= 0 && x < width && y >= 0 && y < height) {
       movePath = gameLogic.generatePath(initialPosition, terminalPosition);
     } else {
       movePath = [];
@@ -95,11 +93,6 @@ class GameBoardNotifier extends ChangeNotifier {
 
   void newTurn() async {
     gameLogic.nextTurn();
-    notifyListeners();
-  }
-
-  void shuffle() {
-    gameLogic.shuffle(gameData.board);
     notifyListeners();
   }
 
@@ -149,4 +142,6 @@ class GameBoardNotifier extends ChangeNotifier {
   int get generationNerf => gameData.generationNerf;
   int get newestColor => gameLogic.numColors - 1;
   int get turnsPaused => gameData.turnsSkipped;
+  int get width => gameData.width;
+  int get height => gameData.height;
 }
