@@ -11,13 +11,16 @@ class Menu extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       home: Scaffold(
-        appBar: AppBar(
-          title: const Text('Connect five'),
-        ),
         body: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: <Widget>[
+              const Spacer(),
+              const Text(
+                "Connect Five",
+                style: TextStyle(fontSize: 48),
+              ),
+              const SizedBox(height: 50),
               SizedBox(
                 width: 300, // Set your desired width here
                 height: 80, // Set your desired height here
@@ -31,15 +34,17 @@ class Menu extends StatelessWidget {
                     );
                   },
                   style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 50, vertical: 20),
-                    textStyle: const TextStyle(
-                        fontSize: 30, fontWeight: FontWeight.bold),
-                  ),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 50, vertical: 20),
+                      textStyle: const TextStyle(
+                          fontSize: 30, fontWeight: FontWeight.bold),
+                      shape: const RoundedRectangleBorder(
+                          borderRadius:
+                              BorderRadius.all(Radius.circular(16.0)))),
                   child: const Text('Play'),
                 ),
               ),
-              const SizedBox(height: 50),
+              const SizedBox(height: 25),
               SizedBox(
                 width: 300, // Make this the same as the first button
                 height: 80, // Make this the same as the first button
@@ -53,15 +58,17 @@ class Menu extends StatelessWidget {
                     );
                   },
                   style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 50, vertical: 20),
-                    textStyle: const TextStyle(
-                        fontSize: 30, fontWeight: FontWeight.bold),
-                  ),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 50, vertical: 20),
+                      textStyle: const TextStyle(
+                          fontSize: 30, fontWeight: FontWeight.bold),
+                      shape: const RoundedRectangleBorder(
+                          borderRadius:
+                              BorderRadius.all(Radius.circular(16.0)))),
                   child: const Text('How to play'),
                 ),
               ),
-              const SizedBox(height: 50),
+              const SizedBox(height: 25),
               SizedBox(
                 width: 300, // Make this the same as the first button
                 height: 80, // Make this the same as the first button
@@ -75,14 +82,17 @@ class Menu extends StatelessWidget {
                     );
                   },
                   style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 50, vertical: 20),
-                    textStyle: const TextStyle(
-                        fontSize: 30, fontWeight: FontWeight.bold),
-                  ),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 50, vertical: 20),
+                      textStyle: const TextStyle(
+                          fontSize: 30, fontWeight: FontWeight.bold),
+                      shape: const RoundedRectangleBorder(
+                          borderRadius:
+                              BorderRadius.all(Radius.circular(16.0)))),
                   child: const Text('Leaderboard'),
                 ),
               ),
+              const Spacer(),
             ],
           ),
         ),

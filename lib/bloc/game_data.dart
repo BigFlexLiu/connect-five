@@ -25,7 +25,7 @@ class GameData {
   int turnsSkipped = 0;
   int generationNerf = 0;
 
-  GameData() {
+  GameData(this.width, this.height) {
     newBoard();
   }
 
