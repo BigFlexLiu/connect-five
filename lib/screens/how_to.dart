@@ -14,38 +14,61 @@ class HowToPage extends StatelessWidget {
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          const SizedBox(
-            height: 50,
+          Flexible(
+            flex: 1,
+            child: Container(), // Spacer equivalent.
           ),
-          const Center(
-            child: Text(
-              "Move orb to form a group of five to score points.",
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-              textAlign: TextAlign.center,
+          const Flexible(
+            flex: 1,
+            child: Center(
+              child: Text(
+                "Move orb to form a group of five to score points.",
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                textAlign: TextAlign.center,
+              ),
             ),
           ),
-          const SizedBox(
-            height: 50,
+          const Flexible(
+            flex: 1,
+            child: Center(
+              child: Text(
+                "Form a larger group for bonuses.",
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                textAlign: TextAlign.center,
+              ),
+            ),
           ),
-          Expanded(
-            child: GridView.builder(
-                itemCount: 150, // 10 rows * 15 columns
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 10, // defines number of columns
-                ),
-                itemBuilder: (BuildContext context, int index) {
-                  final int x = index % 10;
-                  final int y = index ~/ 10;
-                  return Container(
-                    decoration: BoxDecoration(
-                      border: Border.all(),
-                    ),
-                    child: sample[x][y] != null
-                        ? Image(image: AssetImage(images[sample[x][y]!]))
-                        : null,
-                  );
-                }),
+          Flexible(
+            flex: 1,
+            child: Container(), // Spacer equivalent.
           ),
+          Flexible(
+              flex: 16,
+              child: GridView.builder(
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: sample.length * sample[0].length,
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: sample.length,
+                  ),
+                  itemBuilder: (BuildContext context, int index) {
+                    final int x = index % sample.length;
+                    final int y = index ~/ sample.length;
+
+                    final image =
+                        sample[x][y] != null ? images[sample[x][y]] : null;
+
+                    // Define the child for the Container based on whether there's an image or not
+                    final containerChild = (image != null)
+                        ? Image(image: AssetImage(image), fit: BoxFit.contain)
+                        : null;
+                    // Return the Container
+                    return Container(
+                      decoration: BoxDecoration(
+                        border: Border.all(),
+                      ),
+                      child: containerChild,
+                    );
+                  })),
         ],
       ),
     );

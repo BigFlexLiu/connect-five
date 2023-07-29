@@ -1,5 +1,7 @@
 import 'dart:math';
 
+import 'package:audioplayers/audioplayers.dart';
+
 import '../constant.dart';
 import 'game_data.dart';
 
@@ -7,7 +9,9 @@ class GameLogic {
   GameData gameData;
   Function(List<Position>) onClear;
 
-  GameLogic(this.gameData, this.onClear);
+  GameLogic(this.gameData, this.onClear) {
+    newGame();
+  }
 
   // Game flow
   void newGame() {
@@ -45,7 +49,7 @@ class GameLogic {
       gameData.colorBan[i] = max(gameData.colorBan[i] - 1, 0);
     }
 
-    // spot generation
+    // Orb generation
     generateOrbs();
     generatePreview(numOrbsToGenerate);
     if (gameData.generationNerf > 0) {
@@ -66,30 +70,27 @@ class GameLogic {
   // Clear all orbs in match or as bonus
   // Leave at least one orb
   Future<bool> clear(List<List<int?>> board) async {
-    List<List<Position>> connectFives = findConnectFive();
-    // final palindrome = findPalindromes(gameData.board);
-    final pluses = findThreePlusThree(board);
-    final cleared = connectFives + pluses;
-    if (cleared.isEmpty) {
+    List<List<Position>> connectFives = findSequences(gameData.board);
+    if (connectFives.isEmpty) {
       return false;
     }
 
-    int scoresEarned = _clearConnectFives(connectFives);
-    scoresEarned += clearThreePlusThrees(pluses);
-    gameData.score += scoresEarned;
+    gameData.score += _clearConnectFives(connectFives);
 
     // Clear all orbs in match and scheduled for clear
     await onClear(gameData.matches);
-    for (Position pos in gameData.matches) {
-      if (gameData.openGrid == WIDTH * HEIGHT - 1) {
-        break;
+    for (var connectFive in connectFives) {
+      for (Position pos in connectFive) {
+        if (gameData.openGrid == gameData.width * gameData.height - 1) {
+          break;
+        }
+        gameData.setAt(pos, null);
       }
-      gameData.setAt(pos, null);
     }
     gameData.matches.clear();
     await onClear(gameData.removeOnTurnEnd);
     for (Position pos in gameData.removeOnTurnEnd) {
-      if (gameData.openGrid == WIDTH * HEIGHT - 1) {
+      if (gameData.openGrid == gameData.width * gameData.height - 1) {
         break;
       }
       gameData.setAt(pos, null);
@@ -140,8 +141,8 @@ class GameLogic {
 
   List<Position> _getEmptyGrids() {
     List<Position> emptyGrids = [];
-    for (var i = 0; i < WIDTH; i++) {
-      for (var j = 0; j < HEIGHT; j++) {
+    for (var i = 0; i < gameData.width; i++) {
+      for (var j = 0; j < gameData.height; j++) {
         var point = Point(i, j);
         if (gameData.at(point) == null) {
           emptyGrids.add(point);
@@ -240,12 +241,12 @@ class GameLogic {
 
     List xValues = [
       Iterable.generate(minX).toList().reversed,
-      List.generate(WIDTH - maxX, (i) => i + maxX)
+      List.generate(gameData.width - maxX, (i) => i + maxX)
     ].expand((x) => x).toList();
 
     List yValues = [
       Iterable.generate(minY).toList().reversed,
-      List.generate(HEIGHT - maxY, (i) => i + maxY)
+      List.generate(gameData.height - maxY, (i) => i + maxY)
     ].expand((x) => x).toList();
 
     for (int x in xValues) {
@@ -258,71 +259,6 @@ class GameLogic {
     return [];
   }
 
-  // Finds all occurrences of five or more in a row or column
-  List<List<Position>> findConnectFive() {
-    List<List<Position>> occurrences = [];
-
-    // Checks if a point on the board is occupied by a spot
-    bool isPointOccupied(Position point) {
-      return gameData.at(point) != null;
-    }
-
-    // Checks if the color of the spot at the given point is the same as the color of the last spot in the segment
-    bool isSameColorAsLastSpot(Position point, List<Position> segment) {
-      return segment.isEmpty || gameData.at(point) == gameData.at(segment.last);
-    }
-
-    // Check rows
-    for (int y = 0; y < HEIGHT; y++) {
-      List<Position> segment = [];
-      for (int x = 0; x < WIDTH; x++) {
-        Position point = Point(x, y);
-        if (isPointOccupied(point) && isSameColorAsLastSpot(point, segment)) {
-          segment.add(point);
-        } else {
-          if (segment.length >= 5) {
-            occurrences.add(segment);
-          }
-          segment = [];
-          if (gameData.at(point) != null) {
-            segment.add(point);
-          }
-        }
-      }
-
-      if (segment.length >= 5) {
-        occurrences.add(segment);
-      }
-      segment = [];
-    }
-
-    // Check columns
-    for (int x = 0; x < WIDTH; x++) {
-      List<Position> segment = [];
-      for (int y = 0; y < HEIGHT; y++) {
-        Position point = Point(x, y);
-        if (isPointOccupied(point) && isSameColorAsLastSpot(point, segment)) {
-          segment.add(point);
-        } else {
-          if (segment.length >= 5) {
-            occurrences.add(segment);
-          }
-          segment = [];
-          if (gameData.at(point) != null) {
-            segment.add(point);
-          }
-        }
-      }
-
-      if (segment.length >= 5) {
-        occurrences.add(segment);
-      }
-      segment = [];
-    }
-
-    return occurrences;
-  }
-
   int _clearConnectFives(List<List<Position>> connectFives) {
     gameData.addMatches(connectFives.expand((i) => i).toList());
     // Calculate bonuses
@@ -333,6 +269,12 @@ class GameLogic {
       assert(connectFive.length >= 5);
       int connectFiveLength = connectFive.length;
       int color = gameData.at(connectFive.first)!;
+      int scores = 0;
+      bool isStraightLine =
+          connectFive.every((element) => element.x == connectFive[0].x) ||
+              connectFive.every((element) => element.y == connectFive[0].y);
+
+      scores += 100 * max(0, connectFiveLength - 9);
 
       if (connectFiveLength >= 9) {
         // Color does not generate for the next five rounds of generation
@@ -341,7 +283,7 @@ class GameLogic {
             .removeWhere((key, value) => value == color);
         bonusRemoval += 4;
         generationNerf += 1;
-        scoresEarned += 100;
+        scores += 100;
       }
       if (connectFiveLength >= 8) {
         // Remove all orbs with the same color as the connect five
@@ -355,21 +297,22 @@ class GameLogic {
         }
         bonusRemoval += 3;
         generationNerf += 1;
-        scoresEarned += 80;
+        scores += 80;
       }
       if (connectFiveLength >= 7) {
         bonusRemoval += 2;
         generationNerf += 1;
-        scoresEarned += 60;
+        scores += 60;
       }
       if (connectFiveLength >= 6) {
         bonusRemoval += 1;
-        scoresEarned += 40;
+        scores += 40;
       }
       if (connectFiveLength >= 5) {
         gameData.turnsSkipped += 1;
-        scoresEarned += 20;
+        scores += 20;
       }
+      scoresEarned += scores * (isStraightLine ? 5 : 1);
     }
 
     // Remove connect fives
@@ -390,8 +333,8 @@ class GameLogic {
 
     // Bonus spot removal
     List<Position> taken = [];
-    for (var xi = 0; xi < WIDTH; xi++) {
-      for (var yi = 0; yi < HEIGHT; yi++) {
+    for (var xi = 0; xi < gameData.width; xi++) {
+      for (var yi = 0; yi < gameData.height; yi++) {
         var point = Point(xi, yi);
         if (gameData.at(point) != null &&
             !gameData.matches.contains(point) &&
@@ -412,177 +355,13 @@ class GameLogic {
     return scoresEarned;
   }
 
-  // NOTE: Unused
-  List<List<Point<int>>> findPalindromes(List<List<int?>> board) {
-    const int minLength = 7;
-    List<List<Point<int>>> palindromes = [];
-    int n = board.length;
-    int m = board[0].length;
+  void playSound() async {
+    final player = AudioPlayer();
 
-    bool isContained(List<Point<int>> smaller, List<Point<int>> larger) {
-      return smaller.first.x >= larger.first.x &&
-          smaller.first.y >= larger.first.y &&
-          smaller.last.x <= larger.last.x &&
-          smaller.last.y <= larger.last.y;
-    }
-
-    bool isPalindrome(List<int?> segment) {
-      if (segment.contains(null) || segment.length < minLength) {
-        return false;
-      }
-
-      int i = 0;
-      int j = segment.length - 1;
-      while (i < j) {
-        if (segment[i] != segment[j]) {
-          return false;
-        }
-        i++;
-        j--;
-      }
-      return true;
-    }
-
-    List<List<Point<int>>> filterOutContainedPalindromes(
-        List<List<Point<int>>> palindromes) {
-      List<List<Point<int>>> filtered = [];
-      for (var p1 in palindromes) {
-        bool isSubset = false;
-        for (var p2 in palindromes) {
-          if (p1 != p2 && isContained(p1, p2)) {
-            isSubset = true;
-            break;
-          }
-        }
-        if (!isSubset) {
-          filtered.add(p1);
-        }
-      }
-      return filtered;
-    }
-
-    // Check all rows
-    for (int i = 0; i < n; i++) {
-      for (int len = m; len >= minLength; len--) {
-        for (int j = 0; j <= m - len; j++) {
-          List<int?> segment = board[i].sublist(j, j + len);
-          if (isPalindrome(segment)) {
-            palindromes
-                .add(List<Point<int>>.generate(len, (k) => Point(i, j + k)));
-          }
-        }
-      }
-    }
-
-    // Check all columns
-    for (int i = 0; i < m; i++) {
-      for (int len = n; len >= minLength; len--) {
-        for (int j = 0; j <= n - len; j++) {
-          List<int?> segment = List<int?>.generate(len, (k) => board[j + k][i]);
-          if (isPalindrome(segment)) {
-            palindromes
-                .add(List<Point<int>>.generate(len, (k) => Point(j + k, i)));
-          }
-        }
-      }
-    }
-
-    return filterOutContainedPalindromes(palindromes);
-  }
-
-  // Note: Unused
-  void clearPalindrome(List<List<Point<int>>> palindrome) {
-    if (palindrome.isNotEmpty) {
-      gameData.generationNerf += numOrbsToGenerate;
-    }
-
-    for (var element in palindrome) {
-      gameData.addMatches(element);
-    }
-  }
-
-  // Note: Unused
-  void shuffle(List<List<int?>> board) {
-    List<int?> shuffleBoard = board.expand((i) => i).toList();
-    shuffleBoard.shuffle();
-    for (int i = 0; i < gameData.width; i++) {
-      board[i] = shuffleBoard
-          .getRange(i * gameData.height, (i + 1) * gameData.height)
-          .toList();
-    }
-  }
-
-  // Three horizontal, three vertical with a single overlap
-  List<List<Position>> findThreePlusThree(List<List<int?>> board) {
-    List<List<Position>> threePlusThree = [];
-    for (int i = 1; i < gameData.width - 1; i++) {
-      for (int j = 1; j < gameData.height - 1; j++) {
-        final List<List<Position>> verticals = List<List<Position>>.generate(
-            3, (x) => List.generate(3, (y) => Position(i + x - 1, j + y - 1)));
-        final List<List<Position>> horizontals = List<List<Position>>.generate(
-            3, (y) => List.generate(3, (x) => Position(i + x - 1, j + y - 1)));
-
-        for (var threes in [verticals, horizontals]) {
-          threes.removeWhere((element) {
-            if (element.any((element) => gameData.at(element) == null)) {
-              return true;
-            }
-            if (gameData.at(element[0]) != gameData.at(element[1]) ||
-                gameData.at(element[1]) != gameData.at(element[2])) {
-              return true;
-            }
-            return false;
-          });
-        }
-
-        // Find three by three
-        for (final vertical in verticals) {
-          for (final horizontal in horizontals) {
-            if (gameData.at(vertical[0]) == gameData.at(horizontal[0])) {
-              threePlusThree
-                  .add(Set<Position>.from((vertical + horizontal)).toList());
-            }
-          }
-        }
-      }
-    }
-    return threePlusThree;
-  }
-
-  // Pluses cause its column and row to be cleared
-  // Produces the number of score earned
-  int clearThreePlusThrees(List<List<Position>> pluses) {
-    int scoreEarned = 0;
-    for (final plus in pluses) {
-      gameData.addMatches(plus);
-
-      // find column (median)
-      final x = plus.map((e) => e.x).toList()..sort();
-      final col = x[2];
-      // find row
-      final y = plus.map((e) => e.y).toList()..sort();
-      final row = y[2];
-
-      // Clear row and column
-      for (int i = 0; i < gameData.height; i++) {
-        final pos = Position(col, i);
-        if (plus.contains(pos) || gameData.at(pos) == null) {
-          continue;
-        }
-        gameData.scheduleRemoval(pos);
-        scoreEarned += 1;
-      }
-      for (int i = 0; i < gameData.width; i++) {
-        final pos = Position(i, row);
-        if (plus.contains(pos) || gameData.at(pos) == null) {
-          continue;
-        }
-        gameData.scheduleRemoval(pos);
-        scoreEarned += 1;
-      }
-      scoreEarned += 5;
-    }
-    return scoreEarned;
+    await player.play(
+      AssetSource('pop_short.mp3'),
+      mode: PlayerMode.lowLatency,
+    );
   }
 
   bool get gameOver {
@@ -616,5 +395,58 @@ class GameLogic {
       return 4;
     }
     return 3;
+  }
+}
+
+List<List<Position>> findSequences(List<List<int?>> board) {
+  List<List<Position>> sequences = [];
+  Set<Position> visited = {};
+  int n = board.length;
+  int m = board[0].length;
+
+  for (int i = 0; i < n; i++) {
+    for (int j = 0; j < m; j++) {
+      List<Position> temp = [];
+      dfs(board, i, j, visited, temp);
+      if (temp.length >= 5) {
+        sequences.add(temp);
+      }
+    }
+  }
+
+  return sequences;
+}
+
+void dfs(List<List<int?>> board, int x, int y, Set<Position> visited,
+    List<Position> temp) {
+  int n = board.length;
+  int m = board[0].length;
+
+  if (x < 0 || x >= n || y < 0 || y >= m || board[x][y] == null) {
+    return;
+  }
+
+  Position pos = Position(x, y);
+  if (visited.contains(pos)) {
+    return;
+  }
+
+  visited.add(pos);
+  temp.add(pos);
+
+  List<int> dx = [-1, 0, 1, 0];
+  List<int> dy = [0, 1, 0, -1];
+
+  for (int i = 0; i < 4; i++) {
+    int newX = x + dx[i];
+    int newY = y + dy[i];
+
+    if (newX >= 0 &&
+        newX < n &&
+        newY >= 0 &&
+        newY < m &&
+        board[newX][newY] == board[x][y]) {
+      dfs(board, newX, newY, visited, temp);
+    }
   }
 }
