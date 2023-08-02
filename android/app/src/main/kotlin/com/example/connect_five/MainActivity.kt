@@ -1,4 +1,4 @@
-package com.example.connect_five
+package apps.cfast.connect_five
 
 import io.flutter.embedding.android.FlutterActivity
 
