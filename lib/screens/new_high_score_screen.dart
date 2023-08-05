@@ -31,7 +31,7 @@ class _CongratulationScreenState extends State<CongratulationScreen> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: <Widget>[
           const Text(
-            'You made it onto the leaderboard!',
+            'Congratulations! You made it onto the leaderboard!',
             style: TextStyle(fontSize: 24.0),
           ),
           const SizedBox(height: 24.0),

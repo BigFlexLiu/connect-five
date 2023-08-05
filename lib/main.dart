@@ -7,7 +7,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import 'bloc/leaderboard.dart';
-import 'constant.dart';
 
 void main() {
   runApp(const MyApp());

@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../bloc/game_board_notifier.dart';
+import '../util/circle_painter.dart';
 
 void main() {
   runApp(const MyApp());
@@ -85,28 +86,44 @@ class _GameScreenState extends State<GameScreen> {
               SizedBox(height: screenSize.height * 0.02),
               Padding(
                 padding: const EdgeInsetsDirectional.symmetric(horizontal: 8.0),
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.add_circle,
-                      size: 24,
-                      color: pathColors[gameBoard.newestColor],
-                    ),
-                    Text(
-                        "${gameBoard.orbNum}${gameBoard.generationNerf > 0 ? " (- ${gameBoard.generationNerf})" : ""}"),
-                    const Spacer(),
-                    Text(
-                      'Score: ${Provider.of<GameBoardNotifier>(context).score}',
-                      style: const TextStyle(
-                          fontWeight: FontWeight.bold, fontSize: 24),
-                    ),
-                    const Spacer(),
-                    const Icon(
-                      Icons.hourglass_disabled,
-                      size: 24,
-                    ),
-                    Text("${gameBoard.turnsPaused}"),
-                  ],
+                child: SizedBox(
+                  width: actualWidth,
+                  child: Row(
+                    children: [
+                      SizedBox(
+                        width: 24,
+                        height: 24,
+                        child: CustomPaint(
+                          painter: CirclePainter(
+                              color: pathColors[gameBoard.newestColor],
+                              radius: 12),
+                          child: Text(
+                            "${gameBoard.newestColor + 1}",
+                            style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                          "${gameBoard.orbNum}${gameBoard.generationNerf > 0 ? " (- ${gameBoard.generationNerf})" : ""}"),
+                      const Spacer(),
+                      Text(
+                        'Score: ${Provider.of<GameBoardNotifier>(context).score}',
+                        style: const TextStyle(
+                            fontWeight: FontWeight.bold, fontSize: 24),
+                      ),
+                      const Spacer(),
+                      const Icon(
+                        Icons.hourglass_disabled,
+                        size: 24,
+                      ),
+                      Text("${gameBoard.turnsPaused}"),
+                    ],
+                  ),
                 ),
               ),
               SizedBox(height: screenSize.height * 0.02),
