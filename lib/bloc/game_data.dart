@@ -58,12 +58,12 @@ class GameData {
   }
 
   Future<void> loadData() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    String? jsonString = prefs.getString('gameData');
-    if (jsonString != null) {
-      Map<String, dynamic> jsonData = jsonDecode(jsonString);
-      fromJson(jsonData);
-    }
+    // SharedPreferences prefs = await SharedPreferences.getInstance();
+    // String? jsonString = prefs.getString('gameData');
+    // if (jsonString != null) {
+    //   Map<String, dynamic> jsonData = jsonDecode(jsonString);
+    //   fromJson(jsonData);
+    // }
   }
 
   Map<String, dynamic> toJson() => {
