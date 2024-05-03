@@ -28,7 +28,7 @@ class EndGameScreen extends StatelessWidget {
               ),
               margin: const EdgeInsets.all(20),
               padding: const EdgeInsets.all(20),
-              child: (score > leaderBoardProvider.leaderBoard.min_highscore)
+              child: (score > leaderBoardProvider.leaderBoard.minHighscore)
                   ? CongratulationScreen(
                       score:
                           score) // If the score is higher than the lowest score on the leaderboard, display CongratulationScreen

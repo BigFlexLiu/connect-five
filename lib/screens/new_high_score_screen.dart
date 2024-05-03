@@ -10,7 +10,7 @@ class CongratulationScreen extends StatefulWidget {
   const CongratulationScreen({Key? key, required this.score}) : super(key: key);
 
   @override
-  _CongratulationScreenState createState() => _CongratulationScreenState();
+  State<CongratulationScreen> createState() => _CongratulationScreenState();
 }
 
 class _CongratulationScreenState extends State<CongratulationScreen> {

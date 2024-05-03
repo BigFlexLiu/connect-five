@@ -19,7 +19,7 @@ class LeaderBoard {
   LeaderBoard.fromScores(this._scores);
 
   List<PlayerScore> get scores => _scores;
-  int get min_highscore =>
+  int get minHighscore =>
       scores.length < length ? 0 : scores[scores.length - 1].score;
 
   void addScore(PlayerScore playerScore) {

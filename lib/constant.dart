@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 
 typedef Position = Point<int>;
 
-const MAXNUMGRIDS = 150;
+const maxNumberGrids = 150;
 const horitzontalScreenUsageRatio = 0.9;
 const verticalScreenUsageRatio = 0.7;
 const N = null;
