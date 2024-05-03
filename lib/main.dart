@@ -2,6 +2,7 @@ import 'dart:math';
 
 import 'package:connect_five/bloc/game_board_notifier.dart';
 import 'package:connect_five/screens/menu.dart';
+import 'package:connect_five/util/util.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -17,22 +18,14 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // Get the screen size
-    Size screenSize = MediaQuery.of(context).size;
+    final Size screenSize = MediaQuery.of(context).size;
 
-    // Calculate total grid area (80% of screen area)
-    final double totalGridArea = screenSize.width * screenSize.height * 0.7;
-
-    // Calculate area, width, and height of each grid item
-    final double gridItemArea = totalGridArea / 150;
-    final double gridItemSize = sqrt(gridItemArea);
-
-    // Estimate number of rows and columns
-    final int cols = (screenSize.width / gridItemSize).floor();
-    final int rows = (screenSize.height * 0.7 / gridItemSize).floor();
+    final Point<int> boardSize = getNumRowAndCol(screenSize);
 
     return MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (_) => GameBoardNotifier(cols, rows)),
+        ChangeNotifierProvider(
+            create: (_) => GameBoardNotifier(boardSize.x, boardSize.y)),
         ChangeNotifierProvider(
           create: (context) => LeaderBoardProvider(),
         ),

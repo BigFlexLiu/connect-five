@@ -4,8 +4,9 @@ import 'package:flutter/material.dart';
 
 typedef Position = Point<int>;
 
-const WIDTH = 10;
-const HEIGHT = 15;
+const maxNumberGrids = 150;
+const horitzontalScreenUsageRatio = 0.9;
+const verticalScreenUsageRatio = 0.7;
 const N = null;
 
 const images = [

@@ -1,16 +1,15 @@
 # connect_five
 
-A new Flutter project.
+A single player game that take place on a 2D game board. 
+
+Random orbs of various colors are generated per turn.
+
+Move orbs to form a group of five (Connect Five) to remove them and get points.
+
+Get as much points as you can before the board fills up.
 
 ## Getting Started
 
-This project is a starting point for a Flutter application.
+If you have flutter installed, just run `dart run` to start the game.
 
-A few resources to get you started if this is your first Flutter project:
-
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+If not, it will be in app store soon... Probably.
